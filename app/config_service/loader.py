@@ -1,28 +1,26 @@
 """
-Configuration-Driven Service Loader.
+Configuration-Driven Service Loader — v0.6.0.
 
-PROBLEM SOLVED:
-  Adding a new service (gas, internet, etc.) previously required:
-    - Writing Python code in app/services/new_service/
-    - Registering in the orchestrator
-    - Restart
+v0.6 FIX — CRITICAL BUG RESOLVED:
+  Previous version: YAMLDrivenService.parse_fields() returned a FLAT dict:
+    {"עיר": "רמת גן", "שם פרטי": "..."}
 
-  With this loader, you only need:
-    1. Create config/services/new_service.yaml
-    2. Restart — it's registered automatically
+  All downstream components (ConditionalLogicEngine, detect_missing,
+  build_summary) expected a SECTION-KEYED dict:
+    {"basic": {"עיר": "רמת גן"}, "customer": {...}}
 
-HOW IT WORKS:
-  - On startup, scan config/services/*.yaml
-  - For each YAML that has a valid form_id, instantiate a YAMLDrivenService
-  - YAMLDrivenService implements BaseService using data from the YAML
-  - Python-coded services (ArnonaService) take priority if registered for same form_id
+  This caused conditional logic to SILENTLY NEVER FIRE for YAML services,
+  meaning fields were never hidden, and wrong missing-field detection.
 
-YAML SCHEMA:
-  See config/services/arnona.yaml for a full example.
+  FIX: parse_fields() now returns section-keyed format (same as ArnonaService).
+  get_conditional_logic_engine() now resolves the correct section for each
+  condition field by looking it up from the field definitions.
 
-PRIORITY:
-  Hardcoded Python service > YAML-driven service
-  (ArnonaService stays in place because it has custom validation logic)
+ADDING A NEW SERVICE (no Python code required):
+  1. Create config/services/new_service.yaml with a valid form_id.
+  2. Restart — registered automatically.
+  3. Verify field IDs via GET /discover/{submission_id}.
+  4. Update config/field_maps/{service}.yaml with real IDs.
 """
 from __future__ import annotations
 
@@ -35,27 +33,16 @@ logger = logging.getLogger("config_service.loader")
 SERVICES_DIR = Path("config/services")
 
 
-# ── YAML helpers (no PyYAML dependency — use stdlib) ──────────────────────────
+# ── YAML loader (PyYAML required) ─────────────────────────────────────────────
 
 def _load_yaml(path: Path) -> dict:
-    """
-    Minimal YAML loader for our known schema.
-
-    We do NOT want to add a PyYAML dependency just for config files.
-    Instead, we load using PyYAML if available, and fall back to a
-    JSON-compatible subset otherwise.
-
-    In production, add PyYAML to requirements.txt:
-      pip install pyyaml
-    """
     try:
         import yaml  # type: ignore
         with path.open(encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
     except ImportError:
-        # Fallback: warn and return empty
-        logger.warning(
-            "PyYAML not installed — cannot load %s. "
+        logger.error(
+            "PyYAML not installed — cannot load YAML service %s. "
             "Run: pip install pyyaml",
             path,
         )
@@ -65,124 +52,183 @@ def _load_yaml(path: Path) -> dict:
         return {}
 
 
-# ── Service class built from YAML ─────────────────────────────────────────────
+# ── YAML-driven service ───────────────────────────────────────────────────────
 
 class YAMLDrivenService:
     """
-    A fully functional service driven entirely by a YAML config.
+    A fully functional service driven entirely by a YAML config file.
+    Implements the same interface as BaseService.
 
-    Implements the same interface as BaseService so it plugs into
-    the pipeline orchestrator without any code changes.
+    PARSED DATA FORMAT (v0.6 fix):
+    parse_fields() returns a SECTION-KEYED dict, same as Python services:
+      {
+        "basic":     {"עיר": "רמת גן", "שירותים_נבחרים": ["ארנונה"]},
+        "customer":  {"שם_פרטי": "ישראל", "שם_משפחה": "ישראלי"},
+        "documents": {"חוזה_שכירות": {"present": True, "url": "...", "local_path": "..."}},
+        ...
+      }
 
-    LIMITATION: validation_rules in the YAML are declarative labels only.
-    Cross-document validation (e.g. name-in-lease checks) still needs Python.
-    For those, create a Python subclass of ArnonaService (or a BaseService).
+    This makes ConditionalLogicEngine, detect_missing, and build_summary work
+    correctly — they all expect this section-keyed format.
     """
 
     def __init__(self, config: dict, yaml_path: Path):
-        self._config    = config
+        self._config   = config
         self._yaml_path = yaml_path
-        self._service   = config.get("service", {})
-        self._fields    = config.get("fields", [])
-        self._req_docs  = config.get("required_documents", [])
-        self._cond      = config.get("conditional_rules", [])
+        self._svc      = config.get("service", {})
+        self._fields   = config.get("fields", [])
+        self._req_docs = config.get("required_documents", [])
+        self._cond     = config.get("conditional_rules", [])
         self._email_cfg = config.get("email", {})
-        self._missing   = config.get("missing_info_rules", [])
-        self._validate  = config.get("validation_rules", [])
+        self._missing_rules = config.get("missing_info_rules", [])
 
-        # Build quick lookup: label → field config
-        self._field_by_label: dict[str, dict] = {
-            f["label"]: f for f in self._fields if "label" in f
-        }
-        self._field_by_jfid: dict[str, dict] = {
-            f["jotform_id"]: f for f in self._fields if "jotform_id" in f
-        }
+        # Build lookups: label → field config, jotform_id → field config
+        self._field_by_label: dict[str, dict] = {}
+        self._field_by_jfid:  dict[str, dict] = {}
+        for f in self._fields:
+            lbl  = f.get("label", "")
+            jfid = f.get("jotform_id", "")
+            if lbl:
+                self._field_by_label[lbl] = f
+            if jfid:
+                self._field_by_jfid[jfid] = f
 
     # ── BaseService interface ─────────────────────────────────────────────────
 
     @property
     def form_id(self) -> str:
-        return self._service.get("form_id", "")
+        return self._svc.get("form_id", "")
 
     @property
     def service_name(self) -> str:
-        return self._service.get("display_name", self._service.get("name", ""))
+        return self._svc.get("display_name", self._svc.get("name", ""))
 
     def parse_fields(self, raw_fields: dict) -> dict:
         """
-        Map raw JotForm field IDs to label → value dict.
-        Falls back to returning raw_fields unchanged if no field map.
-        """
-        if not self._fields:
-            return dict(raw_fields)
+        Map raw JotForm field IDs to section-keyed dict.
 
-        parsed: dict[str, Any] = {}
-        for field in self._fields:
-            jfid  = field.get("jotform_id", "")
-            label = field.get("label", jfid)
-            value = raw_fields.get(jfid, "")
-            if value:
-                parsed[label] = value
+        Returns:
+          {
+            "basic":    {"עיר": "...", "שירותים_נבחרים": [...]},
+            "customer": {"שם_פרטי": "...", "טלפון": "..."},
+            ...
+            "_unmapped": {"unknown_field_id": "raw_value"},
+          }
+
+        Uses the field's `label` as the dict key within its section.
+        This matches the format expected by ConditionalLogicEngine and
+        all other downstream pipeline stages.
+        """
+        # Initialize a dict for every known section
+        known_sections = {f.get("section", "other") for f in self._fields}
+        parsed: dict[str, Any] = {s: {} for s in known_sections}
+        parsed["_unmapped"] = {}
+
+        mapped_jfids = set()
+
+        for field_cfg in self._fields:
+            jfid    = field_cfg.get("jotform_id", "")
+            label   = field_cfg.get("label", jfid)
+            section = field_cfg.get("section", "other")
+            ftype   = field_cfg.get("type", "text")
+
+            if not jfid:
+                continue
+
+            value = raw_fields.get(jfid)
+            if value is None:
+                continue  # field not present in this submission
+
+            mapped_jfids.add(jfid)
+            coerced = self._coerce(value, ftype)
+
+            if section not in parsed:
+                parsed[section] = {}
+            parsed[section][label] = coerced
+
+        # Collect unmapped fields (for discovery / debugging)
+        for k, v in raw_fields.items():
+            if k not in mapped_jfids and isinstance(v, str) and len(v) < 500:
+                parsed["_unmapped"][k] = v
 
         return parsed
 
     def build_summary(self, parsed: dict) -> dict:
-        """Build a Hebrew business summary from parsed fields."""
-        svc  = self._service
-        city = parsed.get("עיר", "")
-        addr = self._build_address(parsed)
+        """Build a Hebrew business summary from the section-keyed parsed dict."""
+        basic    = parsed.get("basic", {})
+        customer = parsed.get("customer", {})
+        outgoing = parsed.get("outgoing", {})
+        prop     = parsed.get("property", {})
+
+        city    = basic.get("עיר", "")
+        address = self._build_address(parsed)
 
         summary: dict[str, Any] = {
-            "שירות":    svc.get("display_name", svc.get("name", "")),
-            "עיר":      city,
-            "כתובת":    addr,
-            "תאריך_כניסה": parsed.get("תאריך כניסה", ""),
+            "שירות":         self.service_name,
+            "עיר":           city,
+            "כתובת":         address,
+            "תאריך_כניסה":   basic.get("תאריך_כניסה", ""),
         }
 
-        # Customer section
-        first = parsed.get("שם פרטי (דייר נכנס)", "")
-        last  = parsed.get("שם משפחה (דייר נכנס)", "")
-        if first or last:
+        # Customer
+        c_first = customer.get("שם_פרטי", "")
+        c_last  = customer.get("שם_משפחה", "")
+        if c_first or c_last:
             summary["דייר_נכנס"] = {
-                "שם":    f"{first} {last}".strip(),
-                "טלפון": parsed.get("טלפון (דייר נכנס)", ""),
-                "מייל":  parsed.get("מייל (דייר נכנס)", ""),
+                "שם":    f"{c_first} {c_last}".strip(),
+                "טלפון": customer.get("טלפון", ""),
+                "אימייל": customer.get("אימייל", ""),
             }
 
         # Outgoing
-        out_first = parsed.get("שם פרטי (דייר יוצא)", "")
-        out_last  = parsed.get("שם משפחה (דייר יוצא)", "")
-        if out_first or out_last:
+        o_first = outgoing.get("שם_פרטי", "")
+        o_last  = outgoing.get("שם_משפחה", "")
+        if o_first or o_last:
             summary["דייר_יוצא"] = {
-                "שם":    f"{out_first} {out_last}".strip(),
-                "טלפון": parsed.get("טלפון (דייר יוצא)", ""),
+                "שם":    f"{o_first} {o_last}".strip(),
+                "טלפון": outgoing.get("טלפון", ""),
             }
 
         return summary
 
-    def detect_missing(self, parsed: dict, summary: dict, visibility: dict) -> dict:
-        """Detect missing required fields and documents."""
+    def detect_missing(
+        self,
+        parsed:     dict,
+        summary:    dict,
+        visibility: dict,
+    ) -> dict:
+        """
+        Detect missing required fields and documents.
+        Respects the visibility dict — hidden fields are never flagged missing.
+        """
         missing_info: list[dict] = []
         missing_docs: list[dict] = []
 
-        # Missing required fields
-        for field in self._fields:
-            label    = field.get("label", "")
-            required = field.get("required", "never")
+        for field_cfg in self._fields:
+            label    = field_cfg.get("label", "")
+            section  = field_cfg.get("section", "other")
+            required = field_cfg.get("required", "never")
 
-            # Skip hidden fields
+            # Skip fields hidden by conditional logic
             if visibility.get(label) is False:
                 continue
 
             if required != "always":
                 continue
 
-            value = parsed.get(label, "")
-            if not value or str(value).strip() in ("", "אין", "none", "None"):
-                # Find reason from missing_info_rules
+            section_data = parsed.get(section, {})
+            value = section_data.get(label)
+
+            is_missing = (
+                value is None or
+                (isinstance(value, str) and value.strip() in ("", "אין", "none", "None")) or
+                (isinstance(value, dict) and not value.get("present") and not value.get("url") and not value.get("local_path"))
+            )
+
+            if is_missing:
                 reason = self._missing_reason(label)
                 missing_info.append({
-                    "field":    label,
+                    "field":    f"{section}.{label}",
                     "label":    label,
                     "severity": reason["severity"],
                     "reason":   reason["reason"],
@@ -192,52 +238,41 @@ class YAMLDrivenService:
         for doc in self._req_docs:
             doc_label = doc.get("label", "")
             doc_req   = doc.get("required", "never")
-            jfid      = doc.get("jotform_field", "")
 
             if doc_req != "always":
                 continue
 
-            # Check if file was uploaded
-            value = parsed.get(doc_label, "") or (
-                parsed.get(jfid, "") if jfid else ""
-            )
-            if not value:
+            # Look up doc field in documents section
+            docs_section = parsed.get("documents", {})
+            jfid = doc.get("jotform_field", "")
+            value = docs_section.get(doc_label) or (parsed.get("documents", {}).get(jfid) if jfid else None)
+
+            if not value or (isinstance(value, dict) and not value.get("present") and not value.get("url") and not value.get("local_path")):
                 missing_docs.append({
                     "id":     doc.get("id", ""),
                     "label":  doc_label,
                     "reason": doc.get("missing_reason", ""),
                 })
 
-        is_complete = len(missing_info) == 0 and len(missing_docs) == 0
         return {
-            "is_complete":  is_complete,
+            "is_complete":  not missing_info and not missing_docs,
             "missing_info": missing_info,
             "missing_docs": missing_docs,
         }
 
     def validate(self, parsed: dict, doc_extractions: dict) -> list:
-        """
-        Declarative validation from YAML.
-        Note: complex cross-doc checks not available in YAML mode.
-        Use Python subclass for those.
-        """
+        """Declarative validation from YAML rules."""
         issues = []
-        for rule in self._validate:
-            severity = rule.get("severity", "warning")
-            # Only run same-name check (declarative)
+        for rule in self._config.get("validation_rules", []):
             if rule.get("check") == "same_name_customer_partner":
-                c_name = (
-                    parsed.get("שם פרטי (דייר נכנס)", "") + " " +
-                    parsed.get("שם משפחה (דייר נכנס)", "")
-                ).strip().lower()
-                p_name = (
-                    parsed.get("שם פרטי (שוכר שני)", "") + " " +
-                    parsed.get("שם משפחה (שוכר שני)", "")
-                ).strip().lower()
+                c = parsed.get("customer", {})
+                p = parsed.get("partner", {})
+                c_name = (f"{c.get('שם_פרטי','')} {c.get('שם_משפחה','')}").strip().lower()
+                p_name = (f"{p.get('שם_פרטי','')} {p.get('שם_משפחה','')}").strip().lower()
                 if c_name and p_name and c_name == p_name:
                     issues.append({
                         "id":          rule.get("id", ""),
-                        "severity":    severity,
+                        "severity":    rule.get("severity", "warning"),
                         "label":       rule.get("label", ""),
                         "description": rule.get("description", ""),
                         "suggestion":  rule.get("suggestion", ""),
@@ -261,11 +296,8 @@ class YAMLDrivenService:
         name     = customer.get("שם", "לקוח יקר")
         addr     = summary.get("כתובת", "")
 
-        subject_tpl = cfg.get(
-            "subject_template",
-            "בקשת שירות — {address} — {customer_name}",
-        )
-        subject = subject_tpl.format(address=addr, customer_name=name)
+        tpl     = cfg.get("subject_template", "בקשת שירות — {address} — {customer_name}")
+        subject = tpl.format(address=addr, customer_name=name)
 
         lines = [
             "שלום רב,",
@@ -274,13 +306,11 @@ class YAMLDrivenService:
             "על מנת להמשיך בתהליך, נדרשים הפרטים / המסמכים הבאים:",
             "",
         ]
-
         if missing_info:
             lines.append("📋 פרטים חסרים:")
             for item in missing_info:
                 lines.append(f"  • {item['label']}")
             lines.append("")
-
         if missing_docs:
             lines.append("📎 מסמכים חסרים:")
             for doc in missing_docs:
@@ -299,7 +329,13 @@ class YAMLDrivenService:
         return {"subject": subject, "body": "\n".join(lines)}
 
     def get_conditional_logic_engine(self):
-        """Build a ConditionalLogicEngine from YAML rules."""
+        """
+        Build a ConditionalLogicEngine from YAML rules.
+
+        v0.6 FIX: Conditions now have the correct section resolved by
+        looking up each condition's field label in the field definitions.
+        This was the root cause of conditional logic silently never firing.
+        """
         from app.pipeline.conditional_logic import (
             ConditionalLogicEngine, ConditionalRule, Condition, Op,
         )
@@ -318,44 +354,93 @@ class YAMLDrivenService:
         for r in self._cond:
             if r.get("action") not in ("hide", "show", "autofill"):
                 continue
-            conditions = [
-                Condition(
-                    field    = c.get("field", ""),
-                    section  = c.get("section", ""),
+
+            conditions: list[Condition] = []
+            for c in r.get("conditions", []):
+                field_label = c.get("field", "")
+                # Resolve the section for this condition field.
+                # This is the v0.6 fix: previously section was always "".
+                section = self._section_for_field(field_label)
+
+                conditions.append(Condition(
+                    field    = field_label,
+                    section  = section,
                     operator = op_map.get(c.get("operator", "equals"), Op.EQUALS),
                     value    = c.get("value"),
-                )
-                for c in r.get("conditions", [])
-            ]
+                ))
+
             rule = ConditionalRule(
-                note             = r.get("note", ""),
-                logic            = r.get("logic", "all"),
-                conditions       = conditions,
-                action           = r.get("action", "hide"),
-                targets          = r.get("targets", []),
-                autofill_source  = r.get("autofill_source"),
+                note            = r.get("note", ""),
+                logic           = r.get("logic", "all"),
+                conditions      = conditions,
+                action          = r.get("action", "hide"),
+                targets         = r.get("targets", []),
+                autofill_source = r.get("autofill_source"),
             )
             rules.append(rule)
 
-        engine = ConditionalLogicEngine()
-        engine.rules = rules
-        return engine
+        engine = ConditionalLogicEngine(rules)
+        return engine if rules else None
 
     def get_document_types(self) -> list[str]:
         return [d.get("id", "") for d in self._req_docs if d.get("id")]
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
+    def _section_for_field(self, label: str) -> str:
+        """
+        Look up which section a field belongs to, given its label.
+        Falls back to 'other' if not found — logs a warning so the
+        YAML author can fix the condition field reference.
+        """
+        field = self._field_by_label.get(label)
+        if field:
+            return field.get("section", "other")
+        logger.warning(
+            "Conditional rule references field '%s' which is not in the "
+            "field definitions for service '%s'. Check the YAML. "
+            "Condition will use section='other' and may not fire correctly.",
+            label, self.service_name,
+        )
+        return "other"
+
     def _build_address(self, parsed: dict) -> str:
-        street = parsed.get("רחוב", "")
-        num    = parsed.get("מספר בית", "")
-        apt    = parsed.get("דירה", "")
-        city   = parsed.get("עיר", "")
+        prop   = parsed.get("property", {})
+        basic  = parsed.get("basic", {})
+        street = prop.get("רחוב", "")
+        num    = prop.get("בניין", "")
+        apt    = prop.get("דירה", "")
+        city   = basic.get("עיר", "")
         parts  = [p for p in [street, num, f"דירה {apt}" if apt else "", city] if p]
         return ", ".join(parts)
 
+    def _coerce(self, value: Any, ftype: str) -> Any:
+        """Basic type coercion matching ArnonaService._coerce() behavior."""
+        if value is None:
+            return ""
+        sv = str(value).strip()
+        if ftype == "date":
+            try:
+                from app.utils.hebrew import format_date
+                return format_date(sv)
+            except Exception:
+                return sv
+        if ftype in ("file", "signature"):
+            if sv.startswith("http"):
+                return {"present": True, "url": sv, "local_path": ""}
+            if sv:
+                return {"present": True, "url": "", "local_path": sv}
+            return {"present": False, "url": "", "local_path": ""}
+        if ftype == "bool":
+            return sv.lower() in ("accepted", "הוסכם", "true", "1", "yes", "כן")
+        if ftype == "multi":
+            if isinstance(value, list):
+                return [str(v).strip() for v in value if v]
+            return [s.strip() for s in sv.split(",") if s.strip()]
+        return sv
+
     def _missing_reason(self, label: str) -> dict:
-        for rule in self._missing:
+        for rule in self._missing_rules:
             if rule.get("field") == label:
                 return {
                     "severity": rule.get("severity", "error"),
@@ -366,18 +451,39 @@ class YAMLDrivenService:
 
 # ── Loader ────────────────────────────────────────────────────────────────────
 
+def _validate_yaml_service(config: dict, path: Path) -> list[str]:
+    """
+    Validate a service YAML structure.
+    Returns a list of error messages (empty = valid).
+    """
+    errors = []
+    svc = config.get("service", {})
+
+    if not svc:
+        errors.append("Missing 'service:' top-level key")
+    if not svc.get("form_id"):
+        errors.append("service.form_id is missing or empty")
+    if not svc.get("name") and not svc.get("display_name"):
+        errors.append("service.name or service.display_name is required")
+    if not config.get("fields"):
+        errors.append("No 'fields:' defined — service cannot parse submissions")
+
+    return errors
+
+
 def load_yaml_services(
     services_dir: Path = SERVICES_DIR,
-) -> dict[str, YAMLDrivenService]:
+) -> dict[str, "YAMLDrivenService"]:
     """
-    Scan config/services/*.yaml and return a dict of form_id → YAMLDrivenService.
-
-    Only loads files where form_id is not a placeholder.
+    Scan config/services/*.yaml and return {form_id: YAMLDrivenService}.
+    Skips files where form_id is a placeholder or YAML is invalid.
+    Raises ValueError on startup if any YAML has structural errors —
+    fail loudly rather than silently misconfiguring.
     """
     services: dict[str, YAMLDrivenService] = {}
 
     if not services_dir.exists():
-        logger.warning("Services config dir not found: %s", services_dir)
+        logger.info("Services config dir not found: %s (no YAML services loaded)", services_dir)
         return services
 
     for yaml_path in sorted(services_dir.glob("*.yaml")):
@@ -385,12 +491,21 @@ def load_yaml_services(
         if not config:
             continue
 
-        service_cfg = config.get("service", {})
-        form_id     = service_cfg.get("form_id", "")
-        name        = service_cfg.get("name", yaml_path.stem)
+        # Validate structure
+        errors = _validate_yaml_service(config, yaml_path)
+        if errors:
+            # Fail loudly at startup — don't silently ignore misconfiguration
+            raise ValueError(
+                f"Invalid service YAML {yaml_path.name}: {'; '.join(errors)}"
+            )
 
-        if not form_id or "PLACEHOLDER" in form_id or "HERE" in form_id:
-            logger.info("Skipping YAML service %s — form_id not set", name)
+        svc_cfg = config.get("service", {})
+        form_id = svc_cfg.get("form_id", "")
+        name    = svc_cfg.get("name", yaml_path.stem)
+
+        # Skip placeholder form IDs
+        if not form_id or any(p in form_id for p in ("PLACEHOLDER", "HERE", "TODO")):
+            logger.info("Skipping YAML service '%s' — form_id not set yet", name)
             continue
 
         svc = YAMLDrivenService(config, yaml_path)
@@ -408,15 +523,15 @@ def register_yaml_services(
     services_dir: Path = SERVICES_DIR,
 ) -> dict:
     """
-    Merge YAML services into an existing service registry.
+    Merge YAML services into an existing registry.
     Python-coded services take priority (not overwritten).
-
-    Usage in orchestrator.py:
-      from app.config_service.loader import register_yaml_services
-      _SERVICES = register_yaml_services({"251955479892982": ArnonaService()})
     """
-    yaml_services = load_yaml_services(services_dir)
+    try:
+        yaml_services = load_yaml_services(services_dir)
+    except ValueError as exc:
+        logger.error("YAML service validation failed: %s", exc)
+        raise
 
-    merged = dict(yaml_services)      # start with YAML services
+    merged = dict(yaml_services)
     merged.update(existing_registry)  # Python services override YAML
     return merged

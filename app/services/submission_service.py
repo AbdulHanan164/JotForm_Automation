@@ -1,5 +1,5 @@
 """
-Submission persistence — v0.4.0.
+Submission persistence — v0.6.0.
 
 Three files per submission:
   data/submissions/{ts}_{id}_raw.json      — full technical dump (debug / AI)
@@ -12,7 +12,6 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 from app.pipeline.result import PipelineResult
 
@@ -49,19 +48,3 @@ def save_for_review(result: PipelineResult) -> Path:
     item = build_from_pipeline(result)
     return save(item)
 
-
-# ── Future integration stubs ──────────────────────────────────────────────────
-
-def push_to_hubspot(result: PipelineResult) -> None:
-    """Phase 5: Create/update a HubSpot contact + deal."""
-    raise NotImplementedError("HubSpot not yet configured.")
-
-
-def enrich_with_ai(result: PipelineResult) -> dict[str, Any]:
-    """Phase 6: AI enrichment (classification, missing info extraction)."""
-    raise NotImplementedError("AI enrichment not yet configured.")
-
-
-def upload_to_google_drive(filepath: Path) -> None:
-    """Phase 5: Upload summary to Google Drive."""
-    raise NotImplementedError("Google Drive not yet configured.")

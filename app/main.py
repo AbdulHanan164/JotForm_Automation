@@ -1,27 +1,39 @@
 """
-FastAPI — v0.5.0
+FastAPI — v0.6.0
+
+v0.6 CHANGES:
+  - All protected routes require X-API-Key authentication.
+  - /submissions, /submissions/{id}*, /discover/{id} now require auth.
+  - Startup: logs auth config status and documents_dir.
+  - Version bumped to 0.6.0.
 
 Routes:
-  Webhook:    POST /webhook
-  Health:     GET  /  |  GET /health
+  Webhook:    POST /webhook?token=<WEBHOOK_SECRET>
+  Health:     GET  /  |  GET /health             (public — no auth)
   Review:     GET  /review  |  GET /review/{id}  |  POST /review/{id}/approve  etc.
   Inspection: GET  /submissions  |  GET /submissions/{id}  |  GET /submissions/{id}/email
   Debug:      GET  /discover/{id}
   Admin:      POST /admin/sync/{form_id}  |  GET /admin/forms  |  GET /admin/services
+              GET  /admin/fieldmap/arnona/status
 """
 import json
 from contextlib import asynccontextmanager
+from typing import Annotated
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from app.auth import require_operator, warn_if_insecure
 from app.config import settings
 from app.logger import setup_logger
 from app.routes.webhook import router as webhook_router
 from app.routes.review  import router as review_router
 from app.routes.admin   import router as admin_router
+
+# Type alias for the auth dependency (used in routes defined in main.py)
+_Auth = Annotated[str, Depends(require_operator)]
 
 
 @asynccontextmanager
@@ -32,6 +44,25 @@ async def lifespan(app: FastAPI):
     logger.info("Submissions  : %s", settings.submissions_dir.resolve())
     logger.info("Processed    : %s", settings.processed_dir.resolve())
     logger.info("Review queue : %s", settings.review_dir.resolve())
+    logger.info("Documents    : %s", settings.documents_dir.resolve())
+
+    # Warn if security keys are not configured
+    warn_if_insecure()
+
+    # Warn about unverified arnona field IDs
+    try:
+        from app.services.arnona.field_map import check_field_map_status
+        fm = check_field_map_status()
+        if fm["status"] != "ok":
+            logger.warning(
+                "Field map: %d/%d arnona field IDs are unverified placeholders. "
+                "Run GET /admin/fieldmap/arnona/status for details.",
+                fm["unverified"], fm["total"],
+            )
+        else:
+            logger.info("Field map: all %d arnona field IDs verified ✓", fm["total"])
+    except Exception as exc:
+        logger.warning("Could not check field map status: %s", exc)
 
     # Background JotForm sync (non-blocking)
     if settings.jotform_api_key:
@@ -39,8 +70,8 @@ async def lifespan(app: FastAPI):
             from app.integrations.jotform.client import JotFormClient
             from app.integrations.jotform.sync import FormSync
             from app.routes.admin import _KNOWN_FORM_IDS
-            client = JotFormClient(settings.jotform_api_key)
-            sync   = FormSync(client)
+            client  = JotFormClient(settings.jotform_api_key)
+            sync    = FormSync(client)
             results = sync.sync_all(_KNOWN_FORM_IDS, force=False)
             ok = sum(1 for r in results if r.success)
             logger.info("JotForm sync: %d/%d forms up to date", ok, len(_KNOWN_FORM_IDS))
@@ -61,7 +92,8 @@ app = FastAPI(
         "JotForm Webhook — multi-service pipeline: "
         "parse → conditional logic → doc extraction → "
         "summary → missing detection → cross-doc validation → "
-        "Hebrew email draft → human review."
+        "Hebrew email draft → human review. "
+        "Email is NEVER sent automatically — always requires human approval."
     ),
     lifespan = lifespan,
 )
@@ -78,7 +110,7 @@ app.include_router(review_router)
 app.include_router(admin_router)
 
 
-# ── Health ────────────────────────────────────────────────────────────────────
+# ── Health (public — intentionally no auth) ───────────────────────────────────
 
 @app.get("/", tags=["health"])
 def root():
@@ -95,10 +127,13 @@ def health():
     return {"status": "healthy"}
 
 
-# ── Submission inspection ─────────────────────────────────────────────────────
+# ── Submission inspection (requires auth) ─────────────────────────────────────
 
 @app.get("/submissions", tags=["inspection"])
-def list_submissions(limit: int = 20):
+def list_submissions(
+    limit: int = 20,
+    _op:   _Auth = None,
+):
     """List recent business summaries from data/processed/."""
     files = sorted(
         settings.processed_dir.glob("*_business.json"),
@@ -135,7 +170,7 @@ def list_submissions(limit: int = 20):
 
 
 @app.get("/submissions/{submission_id}", tags=["inspection"])
-def get_submission(submission_id: str):
+def get_submission(submission_id: str, _op: _Auth = None):
     matches = list(settings.processed_dir.glob(f"*_{submission_id}_business.json"))
     if not matches:
         raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found.")
@@ -143,7 +178,7 @@ def get_submission(submission_id: str):
 
 
 @app.get("/submissions/{submission_id}/email", tags=["inspection"])
-def get_email_draft(submission_id: str):
+def get_email_draft(submission_id: str, _op: _Auth = None):
     matches = list(settings.processed_dir.glob(f"*_{submission_id}_business.json"))
     if not matches:
         raise HTTPException(status_code=404, detail=f"Submission {submission_id} not found.")
@@ -157,10 +192,10 @@ def get_email_draft(submission_id: str):
     )
 
 
-# ── Field discovery ───────────────────────────────────────────────────────────
+# ── Field discovery (requires auth) ──────────────────────────────────────────
 
 @app.get("/discover/{submission_id}", tags=["debug"])
-def discover_fields(submission_id: str):
+def discover_fields(submission_id: str, _op: _Auth = None):
     """
     Show all raw JotForm field IDs for a submission.
     Use this to build / verify service field maps.
@@ -187,7 +222,10 @@ def discover_fields(submission_id: str):
         "form_title":    data.get("form_title"),
         "field_count":   len(combined),
         "fields":        combined,
-        "tip": "Match field IDs to labels, then update app/services/{service}/field_map.py",
+        "tip": (
+            "Match field IDs to labels, then update "
+            "config/field_maps/arnona.yaml and set verified: true"
+        ),
     }
 
 

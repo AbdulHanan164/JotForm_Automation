@@ -1,32 +1,55 @@
+"""
+Application configuration — v0.6.0.
+
+All secrets come from .env (never committed to git).
+See .env.example for the full list of required variables.
+"""
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
 
 class Settings(BaseSettings):
     app_name:    str  = "JotForm Webhook Receiver"
-    app_version: str  = "0.5.0"
+    app_version: str  = "0.6.0"
     debug:       bool = False
     log_level:   str  = "INFO"
 
+    # ── Data directories ──────────────────────────────────────────────────────
     submissions_dir: Path = Path("data/submissions")   # raw full payloads
     processed_dir:   Path = Path("data/processed")     # clean business summaries
     review_dir:      Path = Path("data/review_queue")  # human review queue
+    documents_dir:   Path = Path("data/documents")     # downloaded uploaded files
     logs_dir:        Path = Path("logs")
 
-    # Integrations — fill in .env when ready
-    hubspot_api_key:               str = ""
-    openai_api_key:                str = ""
-    nvidia_api_key:                str = ""
-    google_drive_credentials_path: str = ""
+    # ── Security — MUST be set before production ──────────────────────────────
+    #
+    # OPERATOR_API_KEY  — protects the review, admin, submissions, and discover
+    #                     endpoints. Use a strong random string (32+ chars).
+    #                     Generate: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    #
+    # WEBHOOK_SECRET    — added as ?token= query param in the JotForm webhook URL.
+    #                     JotForm: Settings → Integrations → Webhook → URL:
+    #                       https://yourserver.com/webhook?token=<WEBHOOK_SECRET>
+    #                     Generate: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    #
+    operator_api_key: str = ""   # "" = auth DISABLED (dev/test only)
+    webhook_secret:   str = ""   # "" = signature check DISABLED (dev/test only)
 
-    # JotForm API — required for automatic form sync
+    # ── JotForm API — form sync ───────────────────────────────────────────────
     # Get from: JotForm > Account > API  (https://www.jotform.com/myaccount/api)
     jotform_api_key: str = ""
 
-    # Google Sheets — required for review dashboard sync
-    # Path to service account credentials JSON
-    # See: https://developers.google.com/sheets/api/guides/authorizing
+    # ── Google Sheets — review dashboard ─────────────────────────────────────
+    # Path to service account credentials JSON file
     google_sheets_credentials_path: str = ""
+
+    # ── AI / OCR (not used in v0.6) ───────────────────────────────────────────
+    openai_api_key:  str = ""
+    nvidia_api_key:  str = ""
+
+    # ── Legacy (kept for backward compatibility, unused in v0.6) ─────────────
+    hubspot_api_key:               str = ""
+    google_drive_credentials_path: str = ""
 
     class Config:
         env_file          = ".env"
@@ -35,11 +58,12 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Ensure all data directories exist at startup
+# ── Ensure all data directories exist at startup ──────────────────────────────
 for _dir in (
     settings.submissions_dir,
     settings.processed_dir,
     settings.review_dir,
+    settings.documents_dir,
     settings.logs_dir,
 ):
     _dir.mkdir(parents=True, exist_ok=True)

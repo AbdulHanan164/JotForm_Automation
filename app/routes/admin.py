@@ -1,27 +1,38 @@
 """
-Admin routes — v0.5.0
+Admin routes — v0.6.0.
+
+v0.6 CHANGES:
+  - All endpoints require X-API-Key authentication.
+  - New GET /admin/fieldmap/arnona/status — shows verified vs placeholder field IDs.
 
 Routes:
-  POST /admin/sync/{form_id}     — force re-sync a form from JotForm API
-  POST /admin/sync/all           — sync all registered forms
-  GET  /admin/forms              — list all synced form definitions
-  GET  /admin/forms/{form_id}    — show synced definition for a form
-  GET  /admin/services           — list all registered services (Python + YAML)
+  POST /admin/sync/{form_id}          — force re-sync a form from JotForm API
+  POST /admin/sync/all                — sync all registered forms
+  GET  /admin/forms                   — list all synced form definitions
+  GET  /admin/forms/{form_id}         — show synced definition for a form
+  GET  /admin/forms/{form_id}/yaml    — YAML stub for a form
+  GET  /admin/services                — list all registered services (Python + YAML)
+  GET  /admin/fieldmap/arnona/status  — field map verification status
 """
 from __future__ import annotations
 
 import json
 import logging
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from app.auth import require_operator
 from app.integrations.jotform.client import get_client
 from app.integrations.jotform.sync import FormSync, load_synced_definition
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 logger = logging.getLogger("admin")
+
+# Type alias for the auth dependency
+_Auth = Annotated[str, Depends(require_operator)]
 
 # All registered form IDs (Python-coded + YAML)
 _KNOWN_FORM_IDS = [
@@ -30,8 +41,10 @@ _KNOWN_FORM_IDS = [
 ]
 
 
+# ── JotForm Sync ──────────────────────────────────────────────────────────────
+
 @router.post("/sync/{form_id}", summary="Force sync a form from JotForm API")
-def sync_form(form_id: str, force: bool = True):
+def sync_form(form_id: str, force: bool = True, _op: _Auth = None):
     """
     Pull the latest form definition from JotForm and update the local cache.
     Requires JOTFORM_API_KEY in .env.
@@ -49,8 +62,8 @@ def sync_form(form_id: str, force: bool = True):
             ),
         )
 
-    sync    = FormSync(client)
-    result  = sync.sync_form(form_id, force=force)
+    sync   = FormSync(client)
+    result = sync.sync_form(form_id, force=force)
 
     if not result.success:
         raise HTTPException(
@@ -74,7 +87,7 @@ def sync_form(form_id: str, force: bool = True):
 
 
 @router.post("/sync/all", summary="Sync all known forms")
-def sync_all_forms(force: bool = False):
+def sync_all_forms(force: bool = False, _op: _Auth = None):
     """Sync all registered form IDs."""
     client = get_client()
     if client is None:
@@ -92,14 +105,16 @@ def sync_all_forms(force: bool = False):
     }
 
 
+# ── Form definitions ──────────────────────────────────────────────────────────
+
 @router.get("/forms", summary="List all cached form definitions")
-def list_forms():
+def list_forms(_op: _Auth = None):
     """List all forms that have been synced from JotForm."""
-    forms_dir = Path("config/forms")
-    synced_files = sorted(forms_dir.glob("*_synced.json")) if forms_dir.exists() else []
+    forms_dir  = Path("config/forms")
+    synced     = sorted(forms_dir.glob("*_synced.json")) if forms_dir.exists() else []
 
     forms = []
-    for f in synced_files:
+    for f in synced:
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
             forms.append({
@@ -116,7 +131,7 @@ def list_forms():
 
 
 @router.get("/forms/{form_id}", summary="Full synced definition for a form")
-def get_form_definition(form_id: str):
+def get_form_definition(form_id: str, _op: _Auth = None):
     """Return the full synced form definition including fields and rules."""
     defn = load_synced_definition(form_id)
     if defn is None:
@@ -131,7 +146,7 @@ def get_form_definition(form_id: str):
 
 
 @router.get("/forms/{form_id}/yaml", summary="YAML field map stub for a form")
-def get_form_yaml(form_id: str):
+def get_form_yaml(form_id: str, _op: _Auth = None):
     """Return the auto-generated YAML stub for pasting into config/services/."""
     defn = load_synced_definition(form_id)
     if defn is None:
@@ -140,8 +155,10 @@ def get_form_yaml(form_id: str):
     return PlainTextResponse(yaml_stub, media_type="text/plain; charset=utf-8")
 
 
+# ── Services ──────────────────────────────────────────────────────────────────
+
 @router.get("/services", summary="List all registered services")
-def list_services():
+def list_services(_op: _Auth = None):
     """Show all services registered in the pipeline (Python + YAML)."""
     from app.pipeline.orchestrator import _SERVICES
     services = []
@@ -156,3 +173,57 @@ def list_services():
             ),
         })
     return {"count": len(services), "services": services}
+
+
+# ── Field map verification ────────────────────────────────────────────────────
+
+@router.get("/fieldmap/arnona/status", summary="Arnona field map verification status")
+def arnona_fieldmap_status(_op: _Auth = None):
+    """
+    Show how many JotForm field IDs in the arnona field map are verified vs
+    still placeholder values.
+
+    All entries in config/field_maps/arnona.yaml start as verified: false.
+    To resolve:
+      1. POST /admin/sync/251955479892982  — pulls real field IDs from JotForm
+      2. Copy real IDs into config/field_maps/arnona.yaml
+      3. Set verified: true for each ID you confirmed
+      4. Restart or call this endpoint again to recheck
+
+    Status codes:
+      "ok"            — all fields verified
+      "warnings"      — some placeholders remain (service may work partially)
+      "not_loaded"    — field map YAML could not be loaded (check YAML syntax)
+    """
+    try:
+        from app.services.arnona.field_map import check_field_map_status
+        status = check_field_map_status()
+        return {
+            "form_id":          "251955479892982",
+            "service":          "העברת חשבון ארנונה",
+            "total_fields":     status["total"],
+            "verified":         status["verified"],
+            "unverified":       status["unverified"],
+            "unverified_labels": status["unverified_labels"],
+            "status":           status["status"],
+            "action_needed": (
+                None
+                if status["status"] == "ok"
+                else (
+                    f"{status['unverified']} field ID(s) are still placeholders. "
+                    "POST /admin/sync/251955479892982 to get real IDs from JotForm, "
+                    "then update config/field_maps/arnona.yaml."
+                )
+            ),
+        }
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Field map module not available: {exc}",
+        )
+    except Exception as exc:
+        logger.exception("Error loading arnona field map status")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not load field map status: {exc}",
+        )

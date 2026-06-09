@@ -9,13 +9,14 @@ Rules are data — each rule is a dict with:
   required    — callable(parsed) → bool: True = this rule must pass
   reason      — callable(parsed) → str: why it's required (for email)
 
-The engine iterates rules, evaluates check() and required() independently,
-then builds the missing_info / missing_docs lists.
+v0.6 CHANGE: Removed _arnona_field_hidden() which depended on the removed
+CITY_HIDDEN_FIELDS dict. The conditional logic engine (ConditionalLogicEngine)
+is now the single source of truth for which fields are hidden.
 
-CITY-AWARE RULES:
-  Some fields are hidden by JotForm conditional logic for certain cities.
-  The required() lambda returns False for those combinations, so they
-  never appear as "missing" even when the field is empty.
+The orchestrator calls detect_missing(parsed, summary, visibility) where
+visibility is pre-computed by the engine. Rules no longer need to duplicate
+the city/service logic — they just check required() and the orchestrator
+skips any field whose visibility[label] == False.
 """
 from __future__ import annotations
 
@@ -30,8 +31,7 @@ def _has(parsed: dict, section: str, label: str) -> bool:
     if isinstance(val, bool):
         return val
     if isinstance(val, dict):
-        # File/signature field: check 'present' key
-        return val.get("present", False) or bool(val.get("url", ""))
+        return val.get("present", False) or bool(val.get("url", "")) or bool(val.get("local_path", ""))
     if isinstance(val, list):
         return len(val) > 0
     return bool(str(val).strip())
@@ -53,7 +53,6 @@ def _has_service(parsed: dict, keyword: str) -> bool:
 
 
 def _is_company(parsed: dict) -> bool:
-    """True if the applicant is a company, not a private person."""
     ptype = str(parsed.get("basic", {}).get("סוג_לקוח", "")).lower()
     return "חברה" in ptype or "עסק" in ptype or "תאגיד" in ptype
 
@@ -74,24 +73,11 @@ def _has_partner(parsed: dict) -> bool:
     )
 
 
-def _arnona_field_hidden(parsed: dict, field_label: str) -> bool:
-    """
-    Returns True if this arnona field is hidden by JotForm conditional logic
-    (i.e. it was never shown to the user, so we must NOT flag it as missing).
-    """
-    from app.services.arnona.field_map import CITY_HIDDEN_FIELDS
-    city = _city(parsed)
-    hidden = CITY_HIDDEN_FIELDS.get(city, {})
-    if _has_service(parsed, "ארנונה"):
-        if field_label in hidden.get("ארנונה", []):
-            return True
-    if _has_service(parsed, "מים"):
-        if field_label in hidden.get("מים", []):
-            return True
-    return False
-
-
 # ── Rule definitions ──────────────────────────────────────────────────────────
+# NOTE: Fields hidden by conditional logic are filtered out by the orchestrator
+# BEFORE these rules run (via the visibility dict). So rules here only need
+# to express BUSINESS logic (is this field required given what was filled in?),
+# not JotForm UI logic (is the field shown?). Keep them separate.
 
 INFO_RULES: list[dict[str, Any]] = [
 
@@ -106,7 +92,7 @@ INFO_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "move_in_date",
-        "label":    "תאריך כניסה",
+        "label":    "תאריך_כניסה",
         "section":  "basic",
         "check":    lambda p: _has(p, "basic", "תאריך_כניסה"),
         "required": lambda p: True,
@@ -114,7 +100,7 @@ INFO_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "services_selected",
-        "label":    "שירותים לטיפול",
+        "label":    "שירותים_נבחרים",
         "section":  "basic",
         "check":    lambda p: len(_services(p)) > 0,
         "required": lambda p: True,
@@ -132,7 +118,7 @@ INFO_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "customer_phone",
-        "label":    "טלפון דייר נכנס",
+        "label":    "טלפון",
         "section":  "customer",
         "check":    lambda p: _has(p, "customer", "טלפון"),
         "required": lambda p: True,
@@ -140,7 +126,7 @@ INFO_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "customer_email",
-        "label":    "אימייל דייר נכנס",
+        "label":    "אימייל",
         "section":  "customer",
         "check":    lambda p: _has(p, "customer", "אימייל"),
         "required": lambda p: True,
@@ -148,7 +134,7 @@ INFO_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "customer_id",
-        "label":    "ת.ז דייר נכנס",
+        "label":    "תעודת_זהות",
         "section":  "customer",
         "check":    lambda p: _has(p, "customer", "תעודת_זהות"),
         "required": lambda p: not _is_company(p),
@@ -158,7 +144,7 @@ INFO_RULES: list[dict[str, Any]] = [
     # ── Partner (conditional) ─────────────────────────────────────────────────
     {
         "id":       "partner_id",
-        "label":    "ת.ז שוכר שני",
+        "label":    "תעודת_זהות (שוכר שני)",
         "section":  "partner",
         "check":    lambda p: _has(p, "partner", "תעודת_זהות"),
         "required": lambda p: _has_partner(p),
@@ -168,7 +154,7 @@ INFO_RULES: list[dict[str, Any]] = [
     # ── Outgoing Tenant (conditional) ─────────────────────────────────────────
     {
         "id":       "outgoing_id",
-        "label":    "ת.ז דייר יוצא",
+        "label":    "תעודת_זהות (דייר יוצא)",
         "section":  "outgoing",
         "check":    lambda p: _has(p, "outgoing", "תעודת_זהות"),
         "required": lambda p: _has_outgoing_tenant(p),
@@ -176,7 +162,7 @@ INFO_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "outgoing_phone",
-        "label":    "טלפון דייר יוצא",
+        "label":    "טלפון (דייר יוצא)",
         "section":  "outgoing",
         "check":    lambda p: _has(p, "outgoing", "טלפון"),
         "required": lambda p: _has_outgoing_tenant(p),
@@ -186,7 +172,7 @@ INFO_RULES: list[dict[str, Any]] = [
     # ── Property Owner ────────────────────────────────────────────────────────
     {
         "id":       "owner_phone",
-        "label":    "טלפון בעל הבית",
+        "label":    "טלפון (בעל הבית)",
         "section":  "landlord",
         "check":    lambda p: _has(p, "landlord", "טלפון"),
         "required": lambda p: True,
@@ -194,37 +180,31 @@ INFO_RULES: list[dict[str, Any]] = [
     },
 
     # ── Arnona Numbers ────────────────────────────────────────────────────────
+    # Note: fields hidden by conditional logic (e.g. Ramat Gan) are filtered
+    # BEFORE these rules run, via the visibility dict from the engine.
+    # No city logic needed here.
     {
         "id":       "arnona_property_number",
-        "label":    "מספר נכס ארנונה",
+        "label":    "מספר_נכס",
         "section":  "arnona",
         "check":    lambda p: _has(p, "arnona", "מספר_נכס"),
-        "required": lambda p: (
-            _has_service(p, "ארנונה") and
-            not _arnona_field_hidden(p, "מספר_נכס")  # always shown
-        ),
-        "reason":   lambda p: "נדרש לרישום חשבון הארנונה — ניתן למצוא בחשבון הארנונה של הנכס",
+        "required": lambda p: _has_service(p, "ארנונה"),
+        "reason":   lambda p: "נדרש לרישום חשבון הארנונה",
     },
     {
         "id":       "arnona_customer_number",
-        "label":    "מספר לקוח ארנונה",
+        "label":    "מספר_לקוח",
         "section":  "arnona",
         "check":    lambda p: _has(p, "arnona", "מספר_לקוח"),
-        "required": lambda p: (
-            _has_service(p, "ארנונה") and
-            not _arnona_field_hidden(p, "מספר_לקוח")
-        ),
+        "required": lambda p: _has_service(p, "ארנונה"),
         "reason":   lambda p: "מספר לקוח/משלם ארנונה — מופיע בחשבון הארנונה",
     },
     {
         "id":       "arnona_id_number",
-        "label":    "מספר זיהוי נכס ארנונה",
+        "label":    "מספר_זיהוי_נכס",
         "section":  "arnona",
         "check":    lambda p: _has(p, "arnona", "מספר_זיהוי_נכס"),
-        "required": lambda p: (
-            _has_service(p, "ארנונה") and
-            not _arnona_field_hidden(p, "מספר_זיהוי_נכס")
-        ),
+        "required": lambda p: _has_service(p, "ארנונה"),
         "reason":   lambda p: "מספר זיהוי הנכס — מופיע בחשבון הארנונה",
     },
 ]
@@ -233,7 +213,7 @@ INFO_RULES: list[dict[str, Any]] = [
 DOC_RULES: list[dict[str, Any]] = [
     {
         "id":       "id_photo",
-        "label":    "צילום תעודת זהות",
+        "label":    "תעודת_זהות",
         "section":  "documents",
         "check":    lambda p: _has(p, "documents", "תעודת_זהות"),
         "required": lambda p: not _is_company(p),
@@ -241,7 +221,7 @@ DOC_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "lease_contract",
-        "label":    "חוזה שכירות",
+        "label":    "חוזה_שכירות",
         "section":  "documents",
         "check":    lambda p: _has(p, "documents", "חוזה_שכירות"),
         "required": lambda p: True,
@@ -249,7 +229,7 @@ DOC_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "signature",
-        "label":    "חתימה דיגיטלית",
+        "label":    "חתימה",
         "section":  "documents",
         "check":    lambda p: _has(p, "documents", "חתימה"),
         "required": lambda p: True,
@@ -257,18 +237,15 @@ DOC_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "arnona_bill",
-        "label":    "צילום חשבון ארנונה",
+        "label":    "חשבון_ארנונה",
         "section":  "documents",
         "check":    lambda p: _has(p, "documents", "חשבון_ארנונה"),
-        "required": lambda p: (
-            _has_service(p, "ארנונה") and
-            not _arnona_field_hidden(p, "מספר_נכס")
-        ),
+        "required": lambda p: _has_service(p, "ארנונה"),
         "reason":   lambda p: "נדרש לאימות מספר הנכס ופרטי חשבון הארנונה",
     },
     {
         "id":       "corp_cert",
-        "label":    "תעודת התאגדות",
+        "label":    "תעודת_התאגדות",
         "section":  "documents",
         "check":    lambda p: _has(p, "documents", "תעודת_התאגדות"),
         "required": lambda p: _is_company(p),
@@ -276,7 +253,7 @@ DOC_RULES: list[dict[str, Any]] = [
     },
     {
         "id":       "tabu",
-        "label":    "נסח טאבו",
+        "label":    "נסח_טאבו",
         "section":  "documents",
         "check":    lambda p: _has(p, "documents", "נסח_טאבו"),
         "required": lambda p: _is_company(p),
