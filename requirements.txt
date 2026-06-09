@@ -1,0 +1,13 @@
+# Core
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+pydantic-settings==2.6.1
+
+# Future integrations (install when needed)
+# hubspot-api-client
+# openai
+# google-auth
+# google-auth-oauthlib
+# google-auth-httplib2
+# google-api-python-client

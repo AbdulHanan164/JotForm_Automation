@@ -1,0 +1,30 @@
+# Environment & secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+
+# Data — submissions contain PII, never commit
+data/submissions/
+data/processed/
+
+# Logs
+logs/
+
+# Test outputs
+test_results/
+
+# IDE
+.idea/
+.vscode/
+*.swp
