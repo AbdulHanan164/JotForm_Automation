@@ -1,5 +1,5 @@
 """
-FastAPI — v0.4.0
+FastAPI — v0.5.0
 
 Routes:
   Webhook:    POST /webhook
@@ -7,6 +7,7 @@ Routes:
   Review:     GET  /review  |  GET /review/{id}  |  POST /review/{id}/approve  etc.
   Inspection: GET  /submissions  |  GET /submissions/{id}  |  GET /submissions/{id}/email
   Debug:      GET  /discover/{id}
+  Admin:      POST /admin/sync/{form_id}  |  GET /admin/forms  |  GET /admin/services
 """
 import json
 from contextlib import asynccontextmanager
@@ -20,6 +21,7 @@ from app.config import settings
 from app.logger import setup_logger
 from app.routes.webhook import router as webhook_router
 from app.routes.review  import router as review_router
+from app.routes.admin   import router as admin_router
 
 
 @asynccontextmanager
@@ -30,6 +32,23 @@ async def lifespan(app: FastAPI):
     logger.info("Submissions  : %s", settings.submissions_dir.resolve())
     logger.info("Processed    : %s", settings.processed_dir.resolve())
     logger.info("Review queue : %s", settings.review_dir.resolve())
+
+    # Background JotForm sync (non-blocking)
+    if settings.jotform_api_key:
+        try:
+            from app.integrations.jotform.client import JotFormClient
+            from app.integrations.jotform.sync import FormSync
+            from app.routes.admin import _KNOWN_FORM_IDS
+            client = JotFormClient(settings.jotform_api_key)
+            sync   = FormSync(client)
+            results = sync.sync_all(_KNOWN_FORM_IDS, force=False)
+            ok = sum(1 for r in results if r.success)
+            logger.info("JotForm sync: %d/%d forms up to date", ok, len(_KNOWN_FORM_IDS))
+        except Exception as exc:
+            logger.warning("JotForm startup sync failed (non-fatal): %s", exc)
+    else:
+        logger.info("JotForm sync: JOTFORM_API_KEY not set — skipping")
+
     logger.info("=" * 55)
     yield
     logger.info("Shutting down.")
@@ -56,6 +75,7 @@ app.add_middleware(
 
 app.include_router(webhook_router)
 app.include_router(review_router)
+app.include_router(admin_router)
 
 
 # ── Health ────────────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 """
-Pipeline orchestrator — v0.4.0
+Pipeline orchestrator — v0.5.0
 
 8-stage pipeline:
   1. Envelope extraction      — submission ID, form ID, form title
@@ -13,10 +13,15 @@ Pipeline orchestrator — v0.4.0
   9. Draft email              — RTL Hebrew email (queued for human approval)
  10. Review queue             — save to pending_review (NO email sent yet)
 
-To add a new service:
-  1. Create app/services/{name}/ implementing BaseService
-  2. Import and add to _SERVICES below
-  3. Done — no other changes needed
+To add a new service (v0.5+ approach):
+  OPTION A — YAML-driven (no code required):
+    1. Create config/services/new_service.yaml with form_id filled in
+    2. Restart — automatically registered via config_service.loader
+
+  OPTION B — Python-coded (for complex validation logic):
+    1. Create app/services/{name}/ implementing BaseService
+    2. Add to _PYTHON_SERVICES list below
+    3. Python services take priority over YAML services for the same form_id
 """
 from __future__ import annotations
 
@@ -35,14 +40,31 @@ _SERVICES: dict[str, Any] = {}
 
 
 def _register():
-    services = [
+    """
+    Build service registry:
+    1. Load YAML-driven services from config/services/*.yaml
+    2. Register hardcoded Python services (these override YAML for same form_id)
+    """
+    try:
+        from app.config_service.loader import register_yaml_services
+        yaml_services = register_yaml_services({})
+        _SERVICES.update(yaml_services)
+        if yaml_services:
+            logger.info("Loaded %d YAML-driven service(s)", len(yaml_services))
+    except Exception as exc:
+        logger.warning("YAML service loader error (non-fatal): %s", exc)
+
+    # Python-coded services — override YAML for same form_id
+    _PYTHON_SERVICES = [
         ArnonaService(),
         # ElectricityService(),  ← uncomment when field map is ready
         # WaterService(),        ← uncomment when field map is ready
     ]
-    for svc in services:
+    for svc in _PYTHON_SERVICES:
         _SERVICES[svc.form_id] = svc
-        logger.debug("Registered service '%s' for form %s", svc.service_name, svc.form_id)
+        logger.debug("Registered Python service '%s' for form %s", svc.service_name, svc.form_id)
+
+    logger.info("Service registry: %d service(s) registered", len(_SERVICES))
 
 
 _register()

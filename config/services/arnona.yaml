@@ -1,0 +1,669 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Service: העברת חשבון ארנונה  (Arnona Account Transfer)
+# Company: מה זה קל  |  058-773-2700  |  docs@mazekal.co.il
+#
+# HOW TO USE THIS FILE:
+#   1. Run GET /discover/{submission_id} to get real JotForm field IDs.
+#   2. Replace the jotform_id placeholders below with the real IDs.
+#   3. Run POST /admin/sync/251955479892982 to import JotForm conditions.
+#   4. Restart the server — no code changes needed.
+#
+# FIELD ID NOTE:
+#   All jotform_id values below are placeholders (e.g. q4_cityName4).
+#   They must be verified against real JotForm submissions.
+#   Use GET /discover/{submission_id} after your first real webhook.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+service:
+  name: arnona_transfer
+  display_name: "העברת חשבון ארנונה"
+  form_id: "251955479892982"
+  version: "0.5.0"
+
+  # Google Sheet for this service (human review dashboard)
+  google_sheet_id: ""         # TODO: fill in after creating the sheet
+  google_sheet_tab: "הגשות"
+
+  # Contact info for email templates
+  company_name:  "מה זה קל"
+  company_phone: "058-773-2700"
+  company_email: "docs@mazekal.co.il"
+
+
+# ── FIELDS ────────────────────────────────────────────────────────────────────
+# sections: basic | customer | partner | outgoing | landlord | property |
+#           arnona | water | documents | payment | system
+# required: always | never | conditional
+# type:     text | phone | email | date | file | select | multi | signature
+
+fields:
+
+  # ── Basic / Request Info ───────────────────────────────────────────────────
+  - jotform_id: q4_cityName4
+    label: "עיר"
+    section: basic
+    type: text
+    required: always
+    note: "City drives most conditional logic — must be captured first"
+
+  - jotform_id: q5_services5
+    label: "שירות"
+    section: basic
+    type: multi
+    required: always
+    options: ["ארנונה", "מים"]
+    note: "Which services to transfer: ארנונה and/or מים"
+
+  - jotform_id: q6_moveInDate
+    label: "תאריך כניסה"
+    section: basic
+    type: date
+    required: always
+
+  - jotform_id: q7_moveOutDate
+    label: "תאריך יציאה"
+    section: basic
+    type: date
+    required: never
+    note: "Used for outgoing tenant's exit date"
+
+  # ── Incoming Customer ──────────────────────────────────────────────────────
+  - jotform_id: q21_firstName21
+    label: "שם פרטי (דייר נכנס)"
+    section: customer
+    type: text
+    required: always
+
+  - jotform_id: q22_lastName22
+    label: "שם משפחה (דייר נכנס)"
+    section: customer
+    type: text
+    required: always
+
+  - jotform_id: q23_phone23
+    label: "טלפון (דייר נכנס)"
+    section: customer
+    type: phone
+    required: always
+
+  - jotform_id: q24_email24
+    label: "מייל (דייר נכנס)"
+    section: customer
+    type: email
+    required: always
+
+  - jotform_id: q25_idNumber25
+    label: "תעודת זהות (דייר נכנס)"
+    section: customer
+    type: text
+    required: always
+    note: "Hidden for companies — see conditional rules"
+
+  - jotform_id: q26_personType26
+    label: "סוג מגיש"
+    section: customer
+    type: select
+    required: always
+    options: ["פרטי", "חברה"]
+
+  - jotform_id: q27_companyName27
+    label: "שם חברה"
+    section: customer
+    type: text
+    required: conditional
+    note: "Visible only when סוג מגיש = חברה"
+
+  - jotform_id: q28_repName28
+    label: "שם נציג"
+    section: customer
+    type: text
+    required: conditional
+    note: "Visible only when סוג מגיש = חברה"
+
+  - jotform_id: q29_bnNumber29
+    label: "מספר ח.פ"
+    section: customer
+    type: text
+    required: conditional
+    note: "Visible only when סוג מגיש = חברה"
+
+  # ── Partner / Second Tenant ────────────────────────────────────────────────
+  - jotform_id: q31_partnerFirst31
+    label: "שם פרטי (שוכר שני)"
+    section: partner
+    type: text
+    required: never
+
+  - jotform_id: q32_partnerLast32
+    label: "שם משפחה (שוכר שני)"
+    section: partner
+    type: text
+    required: never
+
+  - jotform_id: q33_partnerPhone33
+    label: "טלפון (שוכר שני)"
+    section: partner
+    type: phone
+    required: never
+
+  - jotform_id: q34_partnerID34
+    label: "תעודת זהות (שוכר שני)"
+    section: partner
+    type: text
+    required: never
+
+  # ── Outgoing Tenant ────────────────────────────────────────────────────────
+  - jotform_id: q41_outFirst41
+    label: "שם פרטי (דייר יוצא)"
+    section: outgoing
+    type: text
+    required: always
+
+  - jotform_id: q42_outLast42
+    label: "שם משפחה (דייר יוצא)"
+    section: outgoing
+    type: text
+    required: always
+
+  - jotform_id: q43_outPhone43
+    label: "טלפון (דייר יוצא)"
+    section: outgoing
+    type: phone
+    required: always
+
+  - jotform_id: q44_outEmail44
+    label: "מייל (דייר יוצא)"
+    section: outgoing
+    type: email
+    required: never
+    note: "May be 'אין' — detected as INFO and noted in email"
+
+  # ── Landlord ───────────────────────────────────────────────────────────────
+  - jotform_id: q51_llFirst51
+    label: "שם פרטי (בעל הבית)"
+    section: landlord
+    type: text
+    required: always
+
+  - jotform_id: q52_llLast52
+    label: "שם משפחה (בעל הבית)"
+    section: landlord
+    type: text
+    required: always
+
+  - jotform_id: q53_llPhone53
+    label: "טלפון (בעל הבית)"
+    section: landlord
+    type: phone
+    required: always
+
+  - jotform_id: q54_llEmail54
+    label: "מייל (בעל הבית)"
+    section: landlord
+    type: email
+    required: never
+
+  # ── Property ───────────────────────────────────────────────────────────────
+  - jotform_id: q61_street61
+    label: "רחוב"
+    section: property
+    type: text
+    required: always
+
+  - jotform_id: q62_houseNum62
+    label: "מספר בית"
+    section: property
+    type: text
+    required: always
+
+  - jotform_id: q63_apt63
+    label: "דירה"
+    section: property
+    type: text
+    required: always
+
+  - jotform_id: q64_floor64
+    label: "קומה"
+    section: property
+    type: text
+    required: never
+
+  - jotform_id: q65_entrance65
+    label: "כניסה"
+    section: property
+    type: text
+    required: never
+
+  # ── Arnona Account Numbers ─────────────────────────────────────────────────
+  - jotform_id: q71_propertyId71
+    label: "מספר זיהוי נכס"
+    section: arnona
+    type: text
+    required: conditional
+    note: "Hidden when city=רמת גן — see rule arnona_ramat_gan_hide"
+
+  - jotform_id: q72_customerId72
+    label: "מספר לקוח"
+    section: arnona
+    type: text
+    required: conditional
+    note: "Hidden when city=רמת גן"
+
+  - jotform_id: q73_residentAccount73
+    label: "מספר חשבון תושב"
+    section: arnona
+    type: text
+    required: conditional
+    note: "Hidden when city=רמת גן"
+
+  - jotform_id: q74_customerAccount74
+    label: "מספר חשבון לקוח"
+    section: arnona
+    type: text
+    required: conditional
+    note: "Hidden when city=רמת גן"
+
+  - jotform_id: q75_assetNum75
+    label: "מספר נכס"
+    section: arnona
+    type: text
+    required: never
+
+  # ── Water Account Numbers ──────────────────────────────────────────────────
+  - jotform_id: q81_waterCustomer81
+    label: "מספר לקוח מים"
+    section: water
+    type: text
+    required: conditional
+    note: "Hidden for water service in רמת גן; auto-filled from מספר לקוח for רמת גן/אשדוד"
+
+  - jotform_id: q82_waterAsset82
+    label: "מספר נכס מים"
+    section: water
+    type: text
+    required: conditional
+    note: "Auto-filled from מספר נכס for רמת גן/אשדוד"
+
+  - jotform_id: q83_houseCommittee83
+    label: "ועד בית"
+    section: water
+    type: text
+    required: never
+
+  # ── Documents ─────────────────────────────────────────────────────────────
+  - jotform_id: q91_lease91
+    label: "חוזה שכירות"
+    section: documents
+    type: file
+    required: always
+    document_type: lease_contract
+    note: "Primary validation document — names/dates extracted"
+
+  - jotform_id: q92_idCopy92
+    label: "צילום תעודת זהות"
+    section: documents
+    type: file
+    required: always
+    document_type: id_document
+
+  - jotform_id: q93_arnonaBill93
+    label: "שובר ארנונה"
+    section: documents
+    type: file
+    required: conditional
+    document_type: arnona_bill
+    note: "Required when שירות includes ארנונה"
+
+  - jotform_id: q94_waterBill94
+    label: "שובר מים"
+    section: documents
+    type: file
+    required: conditional
+    document_type: water_bill
+    note: "Required when שירות includes מים"
+
+  # ── System / Internal ──────────────────────────────────────────────────────
+  - jotform_id: q101_submissionRef
+    label: "מספר פנייה"
+    section: system
+    type: text
+    required: never
+    note: "Auto-generated reference number MZK-XXXX"
+
+
+# ── REQUIRED DOCUMENTS ────────────────────────────────────────────────────────
+
+required_documents:
+  - id: lease_contract
+    label: "חוזה שכירות"
+    jotform_field: q91_lease91
+    required: always
+    missing_reason: "נדרש לאימות שמות הדיירים ותאריכי השכירות"
+    extraction: lease          # links to documents/lease_analyzer
+
+  - id: id_document
+    label: "צילום תעודת זהות"
+    jotform_field: q92_idCopy92
+    required: always
+    missing_reason: "נדרש לאימות זהות הדייר הנכנס"
+    extraction: id_card
+
+  - id: arnona_bill
+    label: "שובר ארנונה"
+    jotform_field: q93_arnonaBill93
+    required: conditional
+    condition: "שירות contains ארנונה"
+    missing_reason: "נדרש לאימות מספרי החשבון בעירייה"
+    extraction: arnona_bill
+
+  - id: water_bill
+    label: "שובר מים"
+    jotform_field: q94_waterBill94
+    required: conditional
+    condition: "שירות contains מים"
+    missing_reason: "נדרש לאימות מספרי חשבון מים"
+    extraction: water_bill
+
+
+# ── CONDITIONAL RULES ─────────────────────────────────────────────────────────
+# These mirror the JotForm conditional logic rules exactly.
+# Auto-imported via POST /admin/sync/251955479892982 (supplements these).
+#
+# logic: all = AND, any = OR
+
+conditional_rules:
+
+  - id: arnona_ramat_gan_hide
+    note: "Hide arnona account numbers in Ramat Gan (city handles it internally)"
+    logic: all
+    conditions:
+      - field: "שירות"
+        operator: contains
+        value: "ארנונה"
+      - field: "עיר"
+        operator: equals
+        value: "רמת גן"
+    action: hide
+    targets:
+      - "מספר זיהוי נכס"
+      - "מספר לקוח"
+      - "מספר חשבון תושב"
+      - "מספר חשבון לקוח"
+
+  - id: water_ramat_gan_hide
+    note: "Hide water section in Ramat Gan water service (different process)"
+    logic: all
+    conditions:
+      - field: "שירות"
+        operator: contains
+        value: "מים"
+      - field: "עיר"
+        operator: equals
+        value: "רמת גן"
+    action: hide
+    targets:
+      - "מספר לקוח מים"
+      - "מספר נכס מים"
+      - "ועד בית"
+
+  - id: water_customer_autofill
+    note: "Auto-fill water customer number from arnona customer number"
+    logic: any
+    conditions:
+      - field: "עיר"
+        operator: equals
+        value: "רמת גן"
+      - field: "עיר"
+        operator: equals
+        value: "אשדוד"
+    action: autofill
+    targets:
+      - "מספר לקוח מים"
+    autofill_source: "מספר לקוח"
+
+  - id: water_asset_autofill
+    note: "Auto-fill water asset number from arnona asset number"
+    logic: any
+    conditions:
+      - field: "עיר"
+        operator: equals
+        value: "רמת גן"
+      - field: "עיר"
+        operator: equals
+        value: "אשדוד"
+    action: autofill
+    targets:
+      - "מספר נכס מים"
+    autofill_source: "מספר נכס"
+
+  - id: company_fields_hide_private
+    note: "Hide company fields for private persons"
+    logic: all
+    conditions:
+      - field: "סוג מגיש"
+        operator: equals
+        value: "פרטי"
+    action: hide
+    targets:
+      - "שם חברה"
+      - "שם נציג"
+      - "מספר ח.פ"
+
+  - id: personal_id_hide_company
+    note: "Hide personal ID for companies"
+    logic: all
+    conditions:
+      - field: "סוג מגיש"
+        operator: equals
+        value: "חברה"
+    action: hide
+    targets:
+      - "תעודת זהות (דייר נכנס)"
+
+
+# ── MISSING INFO RULES ────────────────────────────────────────────────────────
+# When a required field is empty, what reason do we show the operator?
+
+missing_info_rules:
+
+  - field: "עיר"
+    severity: error
+    reason: "חסרה עיר — לא ניתן לבדוק כללי תנאי"
+
+  - field: "תאריך כניסה"
+    severity: error
+    reason: "חסר תאריך כניסה — נדרש להכנת מכתב בקשה"
+
+  - field: "שם פרטי (דייר נכנס)"
+    severity: error
+    reason: "חסר שם הדייר הנכנס"
+
+  - field: "שם משפחה (דייר נכנס)"
+    severity: error
+    reason: "חסר שם משפחה הדייר הנכנס"
+
+  - field: "טלפון (דייר נכנס)"
+    severity: error
+    reason: "חסר טלפון — לא ניתן ליצור קשר"
+
+  - field: "תעודת זהות (דייר נכנס)"
+    severity: error
+    reason: "חסרה תעודת זהות — נדרשת לרשות המקומית"
+
+  - field: "רחוב"
+    severity: error
+    reason: "חסרה כתובת הנכס"
+
+  - field: "מספר בית"
+    severity: error
+    reason: "חסר מספר בית"
+
+  - field: "דירה"
+    severity: error
+    reason: "חסר מספר דירה"
+
+  - field: "שם פרטי (דייר יוצא)"
+    severity: error
+    reason: "חסר שם הדייר היוצא"
+
+  - field: "שם משפחה (דייר יוצא)"
+    severity: error
+    reason: "חסר שם משפחה הדייר היוצא"
+
+  - field: "טלפון (דייר יוצא)"
+    severity: error
+    reason: "חסר טלפון דייר יוצא"
+
+  - field: "שם פרטי (בעל הבית)"
+    severity: warning
+    reason: "חסר שם בעל הבית (מומלץ לאימות חוזה)"
+
+  - field: "שם משפחה (בעל הבית)"
+    severity: warning
+    reason: "חסר שם משפחה של בעל הבית"
+
+
+# ── VALIDATION RULES ─────────────────────────────────────────────────────────
+# Cross-field and cross-document consistency checks.
+
+validation_rules:
+
+  - id: duplicate_tenant_names
+    severity: warning
+    label: "שמות דיירים זהים"
+    description: "שם הדייר הנכנס זהה לשוכר השני"
+    check_fields: ["שם פרטי (דייר נכנס)", "שם משפחה (דייר נכנס)",
+                   "שם פרטי (שוכר שני)", "שם משפחה (שוכר שני)"]
+    check: same_name_customer_partner
+    suggestion: "בדוק אם אכן מדובר באותו אדם"
+
+  - id: tenant_name_not_in_lease
+    severity: error
+    label: "שם דייר לא מופיע בחוזה"
+    description: "שם הדייר הנכנס שנמסר בטופס לא נמצא בחוזה השכירות"
+    check: customer_name_in_lease
+    requires_document: lease_contract
+    suggestion: "בקש עותק חוזה עדכני או הבהרה מהלקוח"
+
+  - id: outgoing_email_none
+    severity: info
+    label: "מייל דייר יוצא חסר"
+    description: "הלקוח ציין שאין מייל לדייר היוצא"
+    check: outgoing_email_is_text_none
+    suggestion: "אפשר להמשיך — יש לצרף הערה בפנייה לעירייה"
+
+  - id: partner_phone_no_id
+    severity: warning
+    label: "שוכר שני ללא תעודת זהות"
+    description: "קיים טלפון לשוכר שני אך לא צורפה תעודת זהות"
+    check_fields: ["טלפון (שוכר שני)", "תעודת זהות (שוכר שני)"]
+    check: partner_phone_missing_id
+    suggestion: "בקש תעודת זהות של שוכר שני לאימות מלא"
+
+  - id: lease_date_mismatch
+    severity: warning
+    label: "תאריך שונה מחוזה"
+    description: "תאריך הכניסה בטופס אינו תואם את תאריך תחילת השכירות בחוזה"
+    check: move_in_date_matches_lease
+    requires_document: lease_contract
+    suggestion: "בדוק מול הלקוח — ייתכן טעות הקלדה"
+
+  - id: arnona_bill_account_mismatch
+    severity: error
+    label: "מספר חשבון לא תואם שובר"
+    description: "מספר חשבון ארנונה בטופס שונה ממה שמופיע בשובר"
+    check: arnona_account_matches_bill
+    requires_document: arnona_bill
+    suggestion: "בקש שובר עדכני מהלקוח"
+
+
+# ── EMAIL TEMPLATES ───────────────────────────────────────────────────────────
+
+email:
+  company_name:  "מה זה קל"
+  company_phone: "058-773-2700"
+  company_email: "docs@mazekal.co.il"
+
+  subject_template: "בקשת העברת חשבון ארנונה — {address} — {customer_name}"
+
+  greeting: "שלום רב,"
+
+  intro_complete: >
+    קיבלנו את הגשת הטופס לצורך העברת חשבון ארנונה.
+    כל הפרטים הושלמו בהצלחה.
+
+  intro_missing: >
+    קיבלנו את הגשת הטופס לצורך העברת חשבון ארנונה.
+    על מנת להמשיך בתהליך, נדרשים הפרטים / המסמכים הבאים:
+
+  missing_info_header: "פרטים חסרים:"
+  missing_docs_header: "מסמכים חסרים:"
+
+  signature: |
+    בברכה,
+    צוות מה זה קל
+    טלפון: 058-773-2700
+    מייל: docs@mazekal.co.il
+
+  rtl: true
+  charset: "UTF-8"
+
+
+# ── REVIEW TEMPLATE ───────────────────────────────────────────────────────────
+# What the operator sees in the review dashboard
+
+review:
+  display_fields:
+    - section: "פרטי נכס"
+      fields: ["עיר", "רחוב", "מספר בית", "דירה", "תאריך כניסה"]
+    - section: "דייר נכנס"
+      fields: ["שם פרטי (דייר נכנס)", "שם משפחה (דייר נכנס)",
+               "טלפון (דייר נכנס)", "מייל (דייר נכנס)"]
+    - section: "דייר יוצא"
+      fields: ["שם פרטי (דייר יוצא)", "שם משפחה (דייר יוצא)",
+               "טלפון (דייר יוצא)", "מייל (דייר יוצא)"]
+    - section: "שירות ארנונה"
+      fields: ["מספר זיהוי נכס", "מספר לקוח", "מספר חשבון תושב",
+               "מספר חשבון לקוח"]
+    - section: "שירות מים"
+      fields: ["מספר לקוח מים", "מספר נכס מים"]
+
+  checklist:
+    - "חוזה שכירות — שמות הדיירים תואמים?"
+    - "תאריכי שכירות סבירים?"
+    - "מספרי חשבון מוזנים נכון?"
+    - "כל מסמכים נדרשים צורפו?"
+    - "פרטי בעל הבית אושרו?"
+
+
+# ── GOOGLE SHEETS ─────────────────────────────────────────────────────────────
+# Column mapping when writing to Google Sheets
+
+google_sheets:
+  sheet_id: ""            # TODO: fill in
+  tab_name: "הגשות ארנונה"
+  columns:
+    - key: submission_id
+      header: "מזהה הגשה"
+    - key: received_at
+      header: "תאריך קבלה"
+    - key: city
+      source_field: "עיר"
+      header: "עיר"
+    - key: address
+      header: "כתובת"
+    - key: customer_name
+      header: "דייר נכנס"
+    - key: customer_phone
+      header: "טלפון"
+    - key: services
+      source_field: "שירות"
+      header: "שירותים"
+    - key: review_status
+      header: "סטטוס"
+    - key: is_complete
+      header: "הושלם?"
+    - key: missing_count
+      header: "פרטים חסרים"
+    - key: error_count
+      header: "שגיאות"

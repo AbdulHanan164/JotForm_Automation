@@ -1,13 +1,28 @@
-# Core
+# ── Core (required) ───────────────────────────────────────────────────────────
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
 python-multipart==0.0.12
 pydantic-settings==2.6.1
 
-# Future integrations (install when needed)
-# hubspot-api-client
-# openai
-# google-auth
-# google-auth-oauthlib
-# google-auth-httplib2
-# google-api-python-client
+# ── YAML service config (required for config-driven services) ─────────────────
+pyyaml>=6.0
+
+# ── Optional integrations (uncomment when ready) ──────────────────────────────
+
+# JotForm API sync — no extra dependencies needed (uses stdlib urllib)
+# Already built in: app/integrations/jotform/
+
+# Google Sheets review dashboard
+# google-auth>=2.0
+# google-auth-httplib2>=0.1
+# google-api-python-client>=2.0
+
+# AI document extraction (OpenAI Vision / GPT-4o)
+# openai>=1.0
+
+# HubSpot CRM integration
+# hubspot-api-client>=8.0
+
+# OCR (alternative to OpenAI Vision)
+# pytesseract>=0.3
+# Pillow>=10.0

@@ -4,7 +4,7 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     app_name:    str  = "JotForm Webhook Receiver"
-    app_version: str  = "0.4.0"
+    app_version: str  = "0.5.0"
     debug:       bool = False
     log_level:   str  = "INFO"
 
@@ -18,6 +18,15 @@ class Settings(BaseSettings):
     openai_api_key:                str = ""
     nvidia_api_key:                str = ""
     google_drive_credentials_path: str = ""
+
+    # JotForm API — required for automatic form sync
+    # Get from: JotForm > Account > API  (https://www.jotform.com/myaccount/api)
+    jotform_api_key: str = ""
+
+    # Google Sheets — required for review dashboard sync
+    # Path to service account credentials JSON
+    # See: https://developers.google.com/sheets/api/guides/authorizing
+    google_sheets_credentials_path: str = ""
 
     class Config:
         env_file          = ".env"

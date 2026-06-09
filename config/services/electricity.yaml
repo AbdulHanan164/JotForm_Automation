@@ -1,0 +1,145 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Service: העברת חשבון חשמל  (Electricity Account Transfer)
+# Company: מה זה קל  |  058-773-2700  |  docs@mazekal.co.il
+#
+# STATUS: STUB — fill in after client provides the JotForm form ID
+# ═══════════════════════════════════════════════════════════════════════════════
+
+service:
+  name: electricity_transfer
+  display_name: "העברת חשבון חשמל"
+  form_id: "ELECTRICITY_FORM_ID_HERE"   # TODO: replace with real JotForm form ID
+  version: "0.5.0"
+
+  google_sheet_id: ""
+  google_sheet_tab: "הגשות חשמל"
+
+  company_name:  "מה זה קל"
+  company_phone: "058-773-2700"
+  company_email: "docs@mazekal.co.il"
+
+
+fields:
+  # TODO: run GET /discover/{submission_id} after first real webhook
+  # then fill in the jotform_id values below.
+
+  - jotform_id: PLACEHOLDER_city
+    label: "עיר"
+    section: basic
+    type: text
+    required: always
+
+  - jotform_id: PLACEHOLDER_moveIn
+    label: "תאריך כניסה"
+    section: basic
+    type: date
+    required: always
+
+  - jotform_id: PLACEHOLDER_firstName
+    label: "שם פרטי"
+    section: customer
+    type: text
+    required: always
+
+  - jotform_id: PLACEHOLDER_lastName
+    label: "שם משפחה"
+    section: customer
+    type: text
+    required: always
+
+  - jotform_id: PLACEHOLDER_phone
+    label: "טלפון"
+    section: customer
+    type: phone
+    required: always
+
+  - jotform_id: PLACEHOLDER_email
+    label: "מייל"
+    section: customer
+    type: email
+    required: always
+
+  - jotform_id: PLACEHOLDER_id
+    label: "תעודת זהות"
+    section: customer
+    type: text
+    required: always
+
+  - jotform_id: PLACEHOLDER_meterNum
+    label: "מספר מונה"
+    section: property
+    type: text
+    required: always
+    note: "IEC meter number found on electricity bill"
+
+  - jotform_id: PLACEHOLDER_accountNum
+    label: "מספר לקוח חשמל"
+    section: property
+    type: text
+    required: never
+
+  - jotform_id: PLACEHOLDER_lease
+    label: "חוזה שכירות"
+    section: documents
+    type: file
+    required: always
+    document_type: lease_contract
+
+  - jotform_id: PLACEHOLDER_idCopy
+    label: "צילום תעודת זהות"
+    section: documents
+    type: file
+    required: always
+    document_type: id_document
+
+  - jotform_id: PLACEHOLDER_electricityBill
+    label: "שובר חשמל"
+    section: documents
+    type: file
+    required: always
+    document_type: electricity_bill
+
+
+required_documents:
+  - id: lease_contract
+    label: "חוזה שכירות"
+    required: always
+    missing_reason: "נדרש לאימות פרטי השוכר"
+
+  - id: id_document
+    label: "צילום תעודת זהות"
+    required: always
+    missing_reason: "נדרש לאימות זהות"
+
+  - id: electricity_bill
+    label: "שובר חשמל אחרון"
+    required: always
+    missing_reason: "נדרש לקבלת מספר מונה ומספר לקוח"
+
+
+conditional_rules: []   # TODO: fill in after importing from JotForm
+
+
+email:
+  company_name:  "מה זה קל"
+  company_phone: "058-773-2700"
+  company_email: "docs@mazekal.co.il"
+  subject_template: "בקשת העברת חשבון חשמל — {address} — {customer_name}"
+  rtl: true
+  charset: "UTF-8"
+
+
+google_sheets:
+  sheet_id: ""
+  tab_name: "הגשות חשמל"
+  columns:
+    - key: submission_id
+      header: "מזהה הגשה"
+    - key: received_at
+      header: "תאריך קבלה"
+    - key: customer_name
+      header: "שם לקוח"
+    - key: customer_phone
+      header: "טלפון"
+    - key: review_status
+      header: "סטטוס"

@@ -1,0 +1,119 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Service: העברת חשבון מים  (Water Account Transfer)
+# Company: מה זה קל  |  058-773-2700  |  docs@mazekal.co.il
+#
+# STATUS: STUB — fill in after client provides the JotForm form ID
+# ═══════════════════════════════════════════════════════════════════════════════
+
+service:
+  name: water_transfer
+  display_name: "העברת חשבון מים"
+  form_id: "WATER_FORM_ID_HERE"   # TODO: replace with real JotForm form ID
+  version: "0.5.0"
+
+  google_sheet_id: ""
+  google_sheet_tab: "הגשות מים"
+
+  company_name:  "מה זה קל"
+  company_phone: "058-773-2700"
+  company_email: "docs@mazekal.co.il"
+
+
+fields:
+  # TODO: fill in after running GET /discover/{submission_id}
+
+  - jotform_id: PLACEHOLDER_city
+    label: "עיר"
+    section: basic
+    type: text
+    required: always
+
+  - jotform_id: PLACEHOLDER_moveIn
+    label: "תאריך כניסה"
+    section: basic
+    type: date
+    required: always
+
+  - jotform_id: PLACEHOLDER_firstName
+    label: "שם פרטי"
+    section: customer
+    type: text
+    required: always
+
+  - jotform_id: PLACEHOLDER_lastName
+    label: "שם משפחה"
+    section: customer
+    type: text
+    required: always
+
+  - jotform_id: PLACEHOLDER_phone
+    label: "טלפון"
+    section: customer
+    type: phone
+    required: always
+
+  - jotform_id: PLACEHOLDER_waterAccountNum
+    label: "מספר חשבון מים"
+    section: property
+    type: text
+    required: never
+
+  - jotform_id: PLACEHOLDER_meterNum
+    label: "מספר מונה מים"
+    section: property
+    type: text
+    required: never
+
+  - jotform_id: PLACEHOLDER_lease
+    label: "חוזה שכירות"
+    section: documents
+    type: file
+    required: always
+    document_type: lease_contract
+
+  - jotform_id: PLACEHOLDER_waterBill
+    label: "שובר מים"
+    section: documents
+    type: file
+    required: always
+    document_type: water_bill
+
+
+required_documents:
+  - id: lease_contract
+    label: "חוזה שכירות"
+    required: always
+    missing_reason: "נדרש לאימות פרטי השוכר"
+
+  - id: water_bill
+    label: "שובר מים אחרון"
+    required: always
+    missing_reason: "נדרש לקבלת מספר חשבון ומונה"
+
+
+conditional_rules: []
+
+
+email:
+  company_name:  "מה זה קל"
+  company_phone: "058-773-2700"
+  company_email: "docs@mazekal.co.il"
+  subject_template: "בקשת העברת חשבון מים — {address} — {customer_name}"
+  rtl: true
+  charset: "UTF-8"
+
+
+google_sheets:
+  sheet_id: ""
+  tab_name: "הגשות מים"
+  columns:
+    - key: submission_id
+      header: "מזהה הגשה"
+    - key: received_at
+      header: "תאריך קבלה"
+    - key: customer_name
+      header: "שם לקוח"
+    - key: customer_phone
+      header: "טלפון"
+    - key: review_status
+      header: "סטטוס"

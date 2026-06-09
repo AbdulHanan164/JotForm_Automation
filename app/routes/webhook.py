@@ -1,5 +1,5 @@
 """
-POST /webhook — JotForm webhook receiver — v0.4.0
+POST /webhook — JotForm webhook receiver — v0.5.0
 
 10-stage pipeline:
   parse → conditional logic → doc extraction → summary
@@ -58,6 +58,12 @@ async def receive_webhook(request: Request) -> JSONResponse:
         business_path = save_business(result, settings.processed_dir)
         review_path   = save_for_review(result)
 
+        # ── Google Sheets sync (non-blocking, best-effort) ────────────────────
+        try:
+            _sync_to_sheets(result)
+        except Exception as exc:
+            logger.warning("Google Sheets sync skipped: %s", exc)
+
         # ── Log summary ───────────────────────────────────────────────────────
         logger.info("ID           : %s", result.submission_id)
         logger.info("Service      : %s", result.service_name)
@@ -92,3 +98,34 @@ async def receive_webhook(request: Request) -> JSONResponse:
     except Exception as exc:
         logger.exception("Webhook failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+def _sync_to_sheets(result) -> None:
+    """
+    Write submission to Google Sheets using the service YAML config.
+    Silently skips if Sheets is not configured or service has no sheet_id.
+    """
+    try:
+        from app.config_service.loader import load_yaml_services
+        from app.integrations.google_sheets.client import write_submission_to_sheets
+
+        # Load YAML to get sheet config for this service
+        yaml_services = load_yaml_services()
+        yaml_cfg = yaml_services.get(result.form_id)
+        if yaml_cfg is None:
+            return   # No YAML config for this service
+
+        sheets_config  = yaml_cfg._config.get("google_sheets", {})
+        sheet_id       = sheets_config.get("sheet_id", "")
+        tab_name       = sheets_config.get("tab_name", "הגשות")
+        column_config  = sheets_config.get("columns", [])
+
+        if not sheet_id:
+            logger.debug("Google Sheets: no sheet_id configured for %s", result.form_id)
+            return
+
+        success = write_submission_to_sheets(result, sheet_id, tab_name, column_config)
+        if success:
+            logger.info("Sheets: submission %s written to %s/%s", result.submission_id, sheet_id, tab_name)
+    except Exception as exc:
+        logger.debug("Sheets sync (non-fatal): %s", exc)
