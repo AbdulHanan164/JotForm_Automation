@@ -1,378 +1,429 @@
-# ═══════════════════════════════════════════════════════════════════════════════
-# Field ID Map — "העברת חשבון ארנונה"  (form 251955479892982)
-# Company: מה זה קל  |  058-773-2700  |  docs@mazekal.co.il
+# ═══════════════════════════════════════════════════════════════════════════
+# Field Map — PRODUCTION MAIN FORM
+# form: "NEW MAIN FORM - 3.1 - Step 1 of 7"  (form_id 250201745267957)
 #
-# STATUS: PLACEHOLDER — all jotform_id values need verification.
+# v0.8.2 MIGRATION: real production field IDs restored from the v0.3 mapping
+# (git c42b802:app/parsers/field_maps/main_form.py) and verified against the
+# real submission 6568173356277189497 (MZK6852, 2026-06-09).
 #
-# HOW TO GET REAL FIELD IDs (do this once after first real submission):
-# ─────────────────────────────────────────────────────────────────────
-#  Step 1: Receive a real JotForm submission (or submit the test form).
-#  Step 2: GET /discover/{submission_id}
-#          This shows every raw JotForm field ID and its value.
-#  Step 3: Match each value to the Hebrew label below.
-#  Step 4: Replace the jotform_id value (e.g. "q4_cityName4" → "q4_actualId4").
-#  Step 5: Change verified: false → verified: true for each confirmed field.
-#  Step 6: Restart the server.
+# verified: true  = ID confirmed against a real production payload
+# verified: false = PLACEHOLDER — production ID not yet known; the label keeps
+#                   downstream consumers (rules, mapper) working; the field
+#                   simply parses empty until the real ID is filled in.
 #
-# OR: POST /admin/sync/251955479892982  (requires JOTFORM_API_KEY in .env)
-#     This auto-imports field IDs from the JotForm API and shows a YAML stub
-#     you can paste here to replace the placeholders below.
+# HOW TO VERIFY REMAINING PLACEHOLDERS:
+#   1. Receive a real submission that fills the field (e.g. a רמת גן transfer
+#      for arnona account numbers, a two-tenant lease for partner fields).
+#   2. GET /discover/{submission_id} — shows every raw field ID and value.
+#   3. Replace the placeholder jotform_id, set verified: true, restart.
 #
-# NAMING CONVENTION:
-#   label:   The Hebrew key used INSIDE the section dict in parsed data.
-#            Must match exactly what summary.py and rules.py expect.
-#            Example: "עיר", "שם_פרטי", "תעודת_זהות"
-#   section: One of: basic | customer | partner | outgoing | landlord |
-#                    property | arnona | water | documents | payment | system
-#   type:    text | date | phone | email | id_num | file | signature | bool | multi | select
-# ═══════════════════════════════════════════════════════════════════════════════
+# LABELS ARE A CONTRACT: business_mapper.py, rules.py, summary.py and
+# conditional_logic.py read these exact Hebrew labels. Change IDs freely;
+# never change labels without checking those consumers.
+# ═══════════════════════════════════════════════════════════════════════════
 
-form_id: "251955479892982"
+form_id: "250201745267957"
 service_name: "arnona_transfer"
 
 fields:
 
   # ── Basic / Transaction ────────────────────────────────────────────────────
-  - jotform_id: "q3_moveType3"       # PLACEHOLDER
+  - jotform_id: "q3_input3"
     label: "סוג_מעבר"
     section: basic
     type: select
-    verified: false
+    verified: true                     # "מתחיל שכירות"
 
-  - jotform_id: "q4_cityName4"       # PLACEHOLDER
+  - jotform_id: "q132_input132"
     label: "עיר"
     section: basic
     type: text
-    verified: false
+    verified: true                     # "חולון"
 
-  - jotform_id: "q5_services5"       # PLACEHOLDER
+  - jotform_id: "q419_multiSelect"
     label: "שירותים_נבחרים"
     section: basic
     type: multi
-    verified: false
+    verified: true                     # ["מים","חשמל","ארנונה"]
 
-  - jotform_id: "q6_moveOutDate6"    # PLACEHOLDER
+  - jotform_id: "q194_input194"
     label: "תאריך_יציאה"
     section: basic
     type: date
-    verified: false
+    verified: true                     # v0.3 "return_date"; empty dict when N/A
 
-  - jotform_id: "q7_moveInDate7"     # PLACEHOLDER
+  - jotform_id: "q12_input12"
     label: "תאריך_כניסה"
     section: basic
     type: date
-    verified: false
+    verified: true                     # {"day":"11","month":"06","year":"2026"}
 
-  - jotform_id: "q8_leaseEnd8"       # PLACEHOLDER
+  - jotform_id: "q16_input16"
     label: "תאריך_סיום_חוזה"
     section: basic
     type: date
-    verified: false
+    verified: true
 
-  - jotform_id: "q9_transferDate9"   # PLACEHOLDER
+  - jotform_id: "q9_transferDate9"     # PLACEHOLDER — production ID unknown
     label: "תאריך_העברה"
     section: basic
     type: date
     verified: false
 
-  - jotform_id: "q10_personType10"   # PLACEHOLDER
+  - jotform_id: "q6_input6"
     label: "סוג_לקוח"
     section: basic
     type: select
-    verified: false
+    verified: true                     # "אדם פרטי"
 
-  # ── Main Customer ──────────────────────────────────────────────────────────
-  - jotform_id: "q21_firstName21"    # PLACEHOLDER
+  - jotform_id: "q10_input10"
+    label: "סוג_תשלום"
+    section: basic
+    type: text
+    verified: true                     # "משלם יחיד"
+
+  - jotform_id: "q527_billsTo527"
+    label: "לאן_להעביר"
+    section: basic
+    type: text
+    verified: true                     # "מים, חשמל, ארנונה"
+
+  - jotform_id: "q462_typeA462"
+    label: "סטטוס_דיירים"
+    section: basic
+    type: text
+    verified: true                     # "חדשים"
+
+  # Electricity meter data (no dedicated section in the parse dict — kept in
+  # basic so the values survive into parsed + raw saves; BusinessSubmission
+  # does not yet model them)
+  - jotform_id: "q165_input165"
+    label: "מספר_מונה_חשמל"
+    section: basic
+    type: text
+    verified: true                     # "19010202"
+
+  - jotform_id: "q164_input164"
+    label: "קריאת_מונה_חשמל"
+    section: basic
+    type: text
+    verified: true                     # "094498"
+
+  # ── Main Customer (incoming tenant) ────────────────────────────────────────
+  - jotform_id: "q21_input21"
     label: "שם_פרטי"
     section: customer
     type: text
-    verified: false
+    verified: true                     # "אבנר"
 
-  - jotform_id: "q22_lastName22"     # PLACEHOLDER
+  - jotform_id: "q20_input20"
     label: "שם_משפחה"
     section: customer
     type: text
-    verified: false
+    verified: true                     # "שבו"
 
-  - jotform_id: "q23_phone23"        # PLACEHOLDER
+  - jotform_id: "q208_input208"
     label: "טלפון"
     section: customer
     type: phone
-    verified: false
+    verified: true                     # "0505542388"
 
-  - jotform_id: "q24_email24"        # PLACEHOLDER
+  - jotform_id: "q30_input30"
     label: "אימייל"
     section: customer
     type: email
-    verified: false
+    verified: true
 
-  - jotform_id: "q25_idNumber25"     # PLACEHOLDER
+  - jotform_id: "q32_input32"
     label: "תעודת_זהות"
     section: customer
     type: id_num
-    verified: false
+    verified: true                     # "028721819"
 
-  # ── Partner / Second Tenant ────────────────────────────────────────────────
-  - jotform_id: "q104_input104"      # PLACEHOLDER
+  # ── Partner / Second Tenant — production IDs not yet observed ─────────────
+  - jotform_id: "q104_input104"        # PLACEHOLDER
     label: "שם_פרטי"
     section: partner
     type: text
     verified: false
 
-  - jotform_id: "q235_input235"      # PLACEHOLDER
+  - jotform_id: "q235_input235"        # PLACEHOLDER
     label: "שם_משפחה"
     section: partner
     type: text
     verified: false
 
-  - jotform_id: "q103_input103"      # PLACEHOLDER
+  - jotform_id: "q103_input103"        # PLACEHOLDER
     label: "טלפון"
     section: partner
     type: phone
     verified: false
 
-  - jotform_id: "q105_email105"      # PLACEHOLDER
+  - jotform_id: "q105_email105"        # PLACEHOLDER
     label: "אימייל"
     section: partner
     type: email
     verified: false
 
-  - jotform_id: "q106_idNumber106"   # PLACEHOLDER
+  - jotform_id: "q106_idNumber106"     # PLACEHOLDER
     label: "תעודת_זהות"
     section: partner
     type: id_num
     verified: false
 
   # ── Outgoing Tenant ────────────────────────────────────────────────────────
-  - jotform_id: "q30_outFirstName30" # PLACEHOLDER
+  - jotform_id: "q94_input94"
     label: "שם_פרטי"
     section: outgoing
     type: text
-    verified: false
+    verified: true                     # "רן"
 
-  - jotform_id: "q31_outLastName31"  # PLACEHOLDER
+  - jotform_id: "q230_input230"
     label: "שם_משפחה"
     section: outgoing
     type: text
-    verified: false
+    verified: true                     # "בנישתי"
 
-  - jotform_id: "q32_outId32"        # PLACEHOLDER
+  - jotform_id: "q92_input92"
     label: "תעודת_זהות"
     section: outgoing
     type: id_num
-    verified: false
+    verified: true                     # "308346311"
 
-  - jotform_id: "q33_outPhone33"     # PLACEHOLDER
+  - jotform_id: "q93_input93"
     label: "טלפון"
     section: outgoing
     type: phone
-    verified: false
+    verified: true                     # "0502822206"
 
-  - jotform_id: "q34_outEmail34"     # PLACEHOLDER
+  - jotform_id: "q91_outboundTenant91"
     label: "אימייל"
     section: outgoing
     type: email
-    verified: false
+    verified: true                     # empty in sample — real ID
 
   # ── Landlord ───────────────────────────────────────────────────────────────
-  - jotform_id: "q40_ownerName40"    # PLACEHOLDER
-    label: "שם_מלא"
+  - jotform_id: "q110_input110"
+    label: "שם_פרטי"
     section: landlord
     type: text
-    verified: false
+    verified: true                     # "ראובן"
 
-  - jotform_id: "q41_ownerPhone41"   # PLACEHOLDER
+  - jotform_id: "q236_input236"
+    label: "שם_משפחה"
+    section: landlord
+    type: text
+    verified: true                     # "שמש"
+
+  - jotform_id: "q109_input109"
     label: "טלפון"
     section: landlord
     type: phone
-    verified: false
+    verified: true                     # "0525011146"
 
-  - jotform_id: "q42_ownerEmail42"   # PLACEHOLDER
+  - jotform_id: "q107_input107"
     label: "אימייל"
     section: landlord
     type: email
-    verified: false
+    verified: true                     # empty in sample — real ID
 
-  - jotform_id: "q43_ownerId43"      # PLACEHOLDER
+  - jotform_id: "q108_input108"
     label: "תעודת_זהות"
     section: landlord
     type: id_num
-    verified: false
+    verified: true                     # empty in sample — real ID
 
   # ── Property Address ───────────────────────────────────────────────────────
-  - jotform_id: "q50_street50"       # PLACEHOLDER
+  - jotform_id: "q118_input118"
     label: "רחוב"
     section: property
     type: text
-    verified: false
+    verified: true                     # "צבי תדמור"
 
-  - jotform_id: "q51_building51"     # PLACEHOLDER
+  - jotform_id: "q116_input116"
     label: "בניין"
     section: property
     type: text
-    verified: false
+    verified: true                     # "8"
 
-  - jotform_id: "q52_apartment52"    # PLACEHOLDER
+  - jotform_id: "q115_input115"
     label: "דירה"
     section: property
     type: text
-    verified: false
+    verified: true                     # "42"
 
-  - jotform_id: "q53_floor53"        # PLACEHOLDER
+  - jotform_id: "q53_floor53"          # PLACEHOLDER
     label: "קומה"
     section: property
     type: text
     verified: false
 
-  - jotform_id: "q54_entrance54"     # PLACEHOLDER
+  - jotform_id: "q54_entrance54"       # PLACEHOLDER
     label: "כניסה"
     section: property
     type: text
     verified: false
 
   # ── Arnona Account Numbers ─────────────────────────────────────────────────
-  - jotform_id: "q60_arnonaProperty60"  # PLACEHOLDER
+  # v0.3 carried these in "property" (asset_number / customer_number);
+  # mapped here to the arnona section the current pipeline expects.
+  - jotform_id: "q135_input135"
     label: "מספר_נכס"
     section: arnona
     type: text
-    verified: false
+    verified: true                     # empty for new registrations — real ID
 
-  - jotform_id: "q61_arnonaCust61"      # PLACEHOLDER
+  - jotform_id: "q136_input136"
     label: "מספר_לקוח"
     section: arnona
     type: text
-    verified: false
+    verified: true
 
-  - jotform_id: "q62_arnonaId62"        # PLACEHOLDER
+  - jotform_id: "q62_arnonaId62"       # PLACEHOLDER
     label: "מספר_זיהוי_נכס"
     section: arnona
     type: text
     verified: false
 
-  - jotform_id: "q63_arnonaTenant63"    # PLACEHOLDER
+  - jotform_id: "q63_arnonaTenant63"   # PLACEHOLDER (Ramat Gan specific)
     label: "מספר_חשבון_תושב"
     section: arnona
     type: text
     verified: false
 
-  - jotform_id: "q64_arnonaCustomer64"  # PLACEHOLDER
+  - jotform_id: "q64_arnonaCustomer64" # PLACEHOLDER (Ramat Gan specific)
     label: "מספר_חשבון_לקוח"
     section: arnona
     type: text
     verified: false
 
-  # ── Water Account Numbers ──────────────────────────────────────────────────
-  - jotform_id: "q70_waterProperty70"   # PLACEHOLDER
+  # ── Water Account Numbers — production IDs not yet observed ───────────────
+  - jotform_id: "q70_waterProperty70"  # PLACEHOLDER
     label: "מספר_נכס"
     section: water
     type: text
     verified: false
 
-  - jotform_id: "q71_waterCust71"       # PLACEHOLDER
+  - jotform_id: "q71_waterCust71"      # PLACEHOLDER
     label: "מספר_לקוח"
     section: water
     type: text
     verified: false
 
   # ── Documents / File Uploads ───────────────────────────────────────────────
-  - jotform_id: "q80_idPhoto80"         # PLACEHOLDER
+  # NOTE: presence semantics follow v0.3 — a value counts as present only if
+  # it is a base64 data-URI or an http(s) URL. Relative JotForm
+  # "pending-submissions" paths are placeholders for unfinalized uploads.
+  - jotform_id: "q35_input35"
     label: "תעודת_זהות"
     section: documents
     type: file
-    verified: false
+    verified: true
 
-  - jotform_id: "q81_arnonaBill81"      # PLACEHOLDER
+  - jotform_id: "q181_input181"
+    label: "חתימה"
+    section: documents
+    type: signature
+    verified: true
+
+  - jotform_id: "q467_typeA467"
+    label: "תנאים"
+    section: documents
+    type: bool
+    verified: true                     # "Accepted"
+
+  - jotform_id: "q341_typeA341"
+    label: "הסכם_שירות"
+    section: documents
+    type: bool
+    verified: true                     # "הוסכם"
+
+  - jotform_id: "q81_arnonaBill81"     # PLACEHOLDER — production ID unknown
     label: "חשבון_ארנונה"
     section: documents
     type: file
     verified: false
 
-  - jotform_id: "q82_leaseContract82"   # PLACEHOLDER
+  - jotform_id: "q82_leaseContract82"  # PLACEHOLDER — production ID unknown
     label: "חוזה_שכירות"
     section: documents
     type: file
     verified: false
 
-  - jotform_id: "q83_signature83"       # PLACEHOLDER
-    label: "חתימה"
-    section: documents
-    type: signature
-    verified: false
-
-  - jotform_id: "q84_tabu84"            # PLACEHOLDER
+  - jotform_id: "q84_tabu84"           # PLACEHOLDER
     label: "נסח_טאבו"
     section: documents
     type: file
     verified: false
 
-  - jotform_id: "q85_corpCert85"        # PLACEHOLDER
+  - jotform_id: "q85_corpCert85"       # PLACEHOLDER
     label: "תעודת_התאגדות"
     section: documents
     type: file
     verified: false
 
-  - jotform_id: "q87_terms87"           # PLACEHOLDER
-    label: "תנאים"
-    section: documents
-    type: bool
-    verified: false
-
   # ── Payment ────────────────────────────────────────────────────────────────
-  - jotform_id: "q90_amount90"          # PLACEHOLDER
+  - jotform_id: "q422_amount"
     label: "סכום"
     section: payment
     type: text
-    verified: false
+    verified: true                     # "199"
 
-  - jotform_id: "q91_serviceName91"     # PLACEHOLDER
+  - jotform_id: "q561_input561"
     label: "שם_שירות"
     section: payment
-    type: text
-    verified: false
+    type: multi
+    verified: true                     # ["כניסה - רישום כמשלם עד 2 חשבונות 199 ₪"]
 
   # ── System / Internal ──────────────────────────────────────────────────────
-  - jotform_id: "q100_mzkId100"         # PLACEHOLDER
+  - jotform_id: "q291_uniqueId291"
     label: "מזהה_מזכ"
     section: system
     type: text
-    verified: false
+    verified: true                     # "MZK6852"
 
-  - jotform_id: "q101_refundId101"      # PLACEHOLDER
+  - jotform_id: "q324_uniqueRefund324"
     label: "מזהה_החזר"
     section: system
     type: text
-    verified: false
+    verified: true                     # "MZKR1952"
 
-  - jotform_id: "q102_dealType102"      # PLACEHOLDER
+  - jotform_id: "q530_inOut"
+    label: "כיוון"
+    section: system
+    type: text
+    verified: true                     # "IN"
+
+  - jotform_id: "q480_dealName"
+    label: "שם_עסקה"
+    section: system
+    type: text
+    verified: true                     # "אבנר שבו- צבי תדמור 8 דירה 42,חולון - IN"
+
+  - jotform_id: "q102_dealType102"     # PLACEHOLDER
     label: "סוג_עסקה"
     section: system
     type: text
     verified: false
 
-  # ── FHS Normalized Fields (Google Sheet cols 74–92) ────────────────────────
-  #
-  # FHS = JotForm's own computed normalization of the 3 parallel form paths.
-  # These fields appear in the Google Sheet export (cols 74–92) and provide a
-  # single authoritative value regardless of which form path the user took.
-  #
-  # HOW TO GET REAL FIELD IDs:
-  #   1. Receive one real JotForm submission.
-  #   2. GET /discover/{submission_id}  — shows every raw field ID.
-  #   3. Look for fields whose values match the computed FHS data in the Sheet.
-  #   4. Replace the placeholder jotform_id values below with the real ones.
-  #   5. Set verified: true for each confirmed field.
-  #   6. Restart the server.
-  #
-  # Until these IDs are configured, the business mapper falls back to the raw
-  # section data (customer / outgoing / partner / landlord sections above).
-  # The pipeline works correctly either way.
-  #
+  # ── FHS Normalized Fields ──────────────────────────────────────────────────
   # LABEL NAMING: labels must match exactly what business_mapper.py expects
   # in parsed["fhs"] — see app/mappers/business_mapper.py _coalesce() calls.
-  # ──────────────────────────────────────────────────────────────────────────
 
-  # Incoming tenant (col 74-78)
-  - jotform_id: "fhs_incoming_name_placeholder"   # PLACEHOLDER — update after first submission
+  - jotform_id: "q263_FullAddress"
+    label: "full_address"
+    section: fhs
+    type: text
+    verified: true                     # "צבי תדמור 8 דירה 42, חולון"
+
+  - jotform_id: "q243_input243"
+    label: "outgoing_full_name"
+    section: fhs
+    type: text
+    verified: true                     # "רן בנישתי"
+
+  # Remaining FHS columns — production IDs not yet matched
+  - jotform_id: "fhs_incoming_name_placeholder"   # PLACEHOLDER
     label: "incoming_full_name"
     section: fhs
     type: text
@@ -396,13 +447,6 @@ fields:
     type: phone
     verified: false
 
-  # Outgoing tenant (col 79-83)
-  - jotform_id: "fhs_outgoing_name_placeholder"   # PLACEHOLDER
-    label: "outgoing_full_name"
-    section: fhs
-    type: text
-    verified: false
-
   - jotform_id: "fhs_outgoing_id_placeholder"     # PLACEHOLDER
     label: "outgoing_id"
     section: fhs
@@ -421,7 +465,6 @@ fields:
     type: phone
     verified: false
 
-  # Landlord (col 84-87)
   - jotform_id: "fhs_landlord_id_placeholder"     # PLACEHOLDER
     label: "landlord_id"
     section: fhs
@@ -446,7 +489,6 @@ fields:
     type: text
     verified: false
 
-  # Partner / second tenant (col 88-92)
   - jotform_id: "fhs_partner_name_placeholder"    # PLACEHOLDER
     label: "partner_full_name"
     section: fhs
@@ -471,20 +513,12 @@ fields:
     type: phone
     verified: false
 
-  # Computed summary fields (col 93-94)
-  - jotform_id: "fhs_full_address_placeholder"    # PLACEHOLDER
-    label: "full_address"
-    section: fhs
-    type: text
-    verified: false
-
   - jotform_id: "fhs_transfer_date_placeholder"   # PLACEHOLDER
     label: "transfer_date"
     section: fhs
     type: date
     verified: false
 
-  # Package / payment (col 95-96)
   - jotform_id: "fhs_package_placeholder"         # PLACEHOLDER
     label: "package"
     section: fhs

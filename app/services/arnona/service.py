@@ -1,5 +1,7 @@
 """
-Arnona transfer service — implements BaseService for form 251955479892982.
+Arnona transfer service — implements BaseService for the production
+MAIN FORM 250201745267957 ("NEW MAIN FORM - 3.1 - Step 1 of 7").
+Field IDs live in config/field_maps/arnona.yaml.
 """
 from __future__ import annotations
 
@@ -18,7 +20,7 @@ from app.pipeline.validator import ValidationEngine, ValidationIssue
 
 logger = logging.getLogger("webhook")
 
-FORM_ID = "251955479892982"
+FORM_ID = "250201745267957"
 
 _validation_engine          = ValidationEngine(ARNONA_VALIDATION_RULES)
 _business_validation_engine = ValidationEngine(BUSINESS_VALIDATION_RULES)
@@ -203,7 +205,12 @@ class ArnonaService(BaseService):
                 return {"present": True, "url": ""}
             if sv.startswith("http"):
                 return {"present": True, "url": sv}
-            return {"present": bool(sv), "url": sv}
+            # Relative JotForm paths ("uploads/.../pending-submissions/...")
+            # are placeholders for uploads that never finalized — v0.3 ground
+            # truth treats them as absent, and the downloader can't fetch them.
+            # Keep the path OUT of "url": every presence check downstream
+            # treats a non-empty url as an attached file.
+            return {"present": False, "url": "", "pending_path": sv}
         if ftype == "bool":
             return safe_str(value).lower() in ("accepted", "הוסכם", "true", "1", "yes", "כן")
         if ftype == "multi":

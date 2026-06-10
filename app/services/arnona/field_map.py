@@ -104,60 +104,11 @@ def _load_yaml_field_map() -> tuple[dict[str, dict], list[str]]:
 
 _YAML_MAP, _PLACEHOLDER_LABELS = _load_yaml_field_map()
 
-# Python fallback defaults (used when YAML is absent or a field is missing)
-_PYTHON_DEFAULTS: dict[str, dict] = {
-    "q3_moveType3":      {"label": "סוג_מעבר",          "section": S_BASIC,    "type": "select"},
-    "q4_cityName4":      {"label": "עיר",                "section": S_BASIC,    "type": "text"},
-    "q5_services5":      {"label": "שירותים_נבחרים",     "section": S_BASIC,    "type": "multi"},
-    "q6_moveOutDate6":   {"label": "תאריך_יציאה",        "section": S_BASIC,    "type": "date"},
-    "q7_moveInDate7":    {"label": "תאריך_כניסה",        "section": S_BASIC,    "type": "date"},
-    "q8_leaseEnd8":      {"label": "תאריך_סיום_חוזה",    "section": S_BASIC,    "type": "date"},
-    "q9_transferDate9":  {"label": "תאריך_העברה",        "section": S_BASIC,    "type": "date"},
-    "q10_personType10":  {"label": "סוג_לקוח",           "section": S_BASIC,    "type": "select"},
-    "q21_firstName21":   {"label": "שם_פרטי",            "section": S_CUSTOMER, "type": "text"},
-    "q22_lastName22":    {"label": "שם_משפחה",            "section": S_CUSTOMER, "type": "text"},
-    "q23_phone23":       {"label": "טלפון",               "section": S_CUSTOMER, "type": "phone"},
-    "q24_email24":       {"label": "אימייל",              "section": S_CUSTOMER, "type": "email"},
-    "q25_idNumber25":    {"label": "תעודת_זהות",          "section": S_CUSTOMER, "type": "id_num"},
-    "q104_input104":     {"label": "שם_פרטי",            "section": S_PARTNER,  "type": "text"},
-    "q235_input235":     {"label": "שם_משפחה",            "section": S_PARTNER,  "type": "text"},
-    "q103_input103":     {"label": "טלפון",               "section": S_PARTNER,  "type": "phone"},
-    "q105_email105":     {"label": "אימייל",              "section": S_PARTNER,  "type": "email"},
-    "q106_idNumber106":  {"label": "תעודת_זהות",          "section": S_PARTNER,  "type": "id_num"},
-    "q30_outFirstName30":{"label": "שם_פרטי",            "section": S_OUTGOING, "type": "text"},
-    "q31_outLastName31": {"label": "שם_משפחה",            "section": S_OUTGOING, "type": "text"},
-    "q32_outId32":       {"label": "תעודת_זהות",          "section": S_OUTGOING, "type": "id_num"},
-    "q33_outPhone33":    {"label": "טלפון",               "section": S_OUTGOING, "type": "phone"},
-    "q34_outEmail34":    {"label": "אימייל",              "section": S_OUTGOING, "type": "email"},
-    "q40_ownerName40":   {"label": "שם_מלא",             "section": S_LANDLORD, "type": "text"},
-    "q41_ownerPhone41":  {"label": "טלפון",               "section": S_LANDLORD, "type": "phone"},
-    "q42_ownerEmail42":  {"label": "אימייל",              "section": S_LANDLORD, "type": "email"},
-    "q43_ownerId43":     {"label": "תעודת_זהות",          "section": S_LANDLORD, "type": "id_num"},
-    "q50_street50":      {"label": "רחוב",               "section": S_PROPERTY, "type": "text"},
-    "q51_building51":    {"label": "בניין",              "section": S_PROPERTY, "type": "text"},
-    "q52_apartment52":   {"label": "דירה",               "section": S_PROPERTY, "type": "text"},
-    "q53_floor53":       {"label": "קומה",               "section": S_PROPERTY, "type": "text"},
-    "q54_entrance54":    {"label": "כניסה",              "section": S_PROPERTY, "type": "text"},
-    "q60_arnonaProperty60": {"label": "מספר_נכס",        "section": S_ARNONA,   "type": "text"},
-    "q61_arnonaCust61":     {"label": "מספר_לקוח",       "section": S_ARNONA,   "type": "text"},
-    "q62_arnonaId62":       {"label": "מספר_זיהוי_נכס",  "section": S_ARNONA,   "type": "text"},
-    "q63_arnonaTenant63":   {"label": "מספר_חשבון_תושב", "section": S_ARNONA,   "type": "text"},
-    "q64_arnonaCustomer64": {"label": "מספר_חשבון_לקוח", "section": S_ARNONA,   "type": "text"},
-    "q70_waterProperty70":  {"label": "מספר_נכס",        "section": S_WATER,    "type": "text"},
-    "q71_waterCust71":      {"label": "מספר_לקוח",       "section": S_WATER,    "type": "text"},
-    "q80_idPhoto80":        {"label": "תעודת_זהות",      "section": S_DOCS,     "type": "file"},
-    "q81_arnonaBill81":     {"label": "חשבון_ארנונה",    "section": S_DOCS,     "type": "file"},
-    "q82_leaseContract82":  {"label": "חוזה_שכירות",    "section": S_DOCS,     "type": "file"},
-    "q83_signature83":      {"label": "חתימה",           "section": S_DOCS,     "type": "signature"},
-    "q84_tabu84":           {"label": "נסח_טאבו",        "section": S_DOCS,     "type": "file"},
-    "q85_corpCert85":       {"label": "תעודת_התאגדות",   "section": S_DOCS,     "type": "file"},
-    "q87_terms87":          {"label": "תנאים",           "section": S_DOCS,     "type": "bool"},
-    "q90_amount90":         {"label": "סכום",            "section": S_PAYMENT,  "type": "text"},
-    "q91_serviceName91":    {"label": "שם_שירות",        "section": S_PAYMENT,  "type": "text"},
-    "q100_mzkId100":        {"label": "מזהה_מזכ",        "section": S_SYSTEM,   "type": "text"},
-    "q101_refundId101":     {"label": "מזהה_החזר",       "section": S_SYSTEM,   "type": "text"},
-    "q102_dealType102":     {"label": "סוג_עסקה",        "section": S_SYSTEM,   "type": "text"},
-}
+# v0.8.2: Python fallback defaults removed — they held fictional placeholder
+# IDs for the retired form 251955479892982 and inflated the unverified count.
+# config/field_maps/arnona.yaml (real production IDs, verified against
+# submission MZK6852) is now the single source of truth.
+_PYTHON_DEFAULTS: dict[str, dict] = {}
 
 # YAML overrides Python defaults for the same jotform_id.
 # This means: update the YAML to update field IDs; Python defaults are fallback.

@@ -59,11 +59,14 @@ def format_date(value) -> str:
     Accepts dict {"day": "09", "month": "06", "year": "2026"} or a string.
     """
     if isinstance(value, dict):
-        day   = value.get("day", "").zfill(2)
-        month = value.get("month", "").zfill(2)
+        day   = value.get("day", "")
+        month = value.get("month", "")
         year  = value.get("year", "")
         if day and month and year:
-            return f"{day}-{month}-{year}"
+            return f"{day.zfill(2)}-{month.zfill(2)}-{year}"
+        # Empty/partial date widget ({"day":"","month":"","year":""}) — never
+        # stringify the dict itself; an absent date is an empty string.
+        return ""
     return safe_str(value)
 
 

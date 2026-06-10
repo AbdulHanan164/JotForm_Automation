@@ -140,6 +140,10 @@ def build_from_pipeline(result: Any) -> ReviewItem:
         or summary.get("סוג_עסקה", {}).get("שירות", "")
     )
     mzk_ref = summary.get("מידע_פנימי", {}).get("מספר_פנייה", "")
+    # BusinessSubmission.to_summary_dict() has no MZK field and emits the
+    # "לא סופק" placeholder — fall back to the parsed system section.
+    if not mzk_ref or mzk_ref == "לא סופק":
+        mzk_ref = (result.parsed or {}).get("system", {}).get("מזהה_מזכ", "")
 
     return ReviewItem(
         submission_id     = result.submission_id,
