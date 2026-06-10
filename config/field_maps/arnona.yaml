@@ -348,3 +348,145 @@ fields:
     section: system
     type: text
     verified: false
+
+  # ── FHS Normalized Fields (Google Sheet cols 74–92) ────────────────────────
+  #
+  # FHS = JotForm's own computed normalization of the 3 parallel form paths.
+  # These fields appear in the Google Sheet export (cols 74–92) and provide a
+  # single authoritative value regardless of which form path the user took.
+  #
+  # HOW TO GET REAL FIELD IDs:
+  #   1. Receive one real JotForm submission.
+  #   2. GET /discover/{submission_id}  — shows every raw field ID.
+  #   3. Look for fields whose values match the computed FHS data in the Sheet.
+  #   4. Replace the placeholder jotform_id values below with the real ones.
+  #   5. Set verified: true for each confirmed field.
+  #   6. Restart the server.
+  #
+  # Until these IDs are configured, the business mapper falls back to the raw
+  # section data (customer / outgoing / partner / landlord sections above).
+  # The pipeline works correctly either way.
+  #
+  # LABEL NAMING: labels must match exactly what business_mapper.py expects
+  # in parsed["fhs"] — see app/mappers/business_mapper.py _coalesce() calls.
+  # ──────────────────────────────────────────────────────────────────────────
+
+  # Incoming tenant (col 74-78)
+  - jotform_id: "fhs_incoming_name_placeholder"   # PLACEHOLDER — update after first submission
+    label: "incoming_full_name"
+    section: fhs
+    type: text
+    verified: false
+
+  - jotform_id: "fhs_incoming_id_placeholder"     # PLACEHOLDER
+    label: "incoming_id"
+    section: fhs
+    type: id_num
+    verified: false
+
+  - jotform_id: "fhs_incoming_email_placeholder"  # PLACEHOLDER
+    label: "incoming_email"
+    section: fhs
+    type: email
+    verified: false
+
+  - jotform_id: "fhs_incoming_phone_placeholder"  # PLACEHOLDER
+    label: "incoming_phone"
+    section: fhs
+    type: phone
+    verified: false
+
+  # Outgoing tenant (col 79-83)
+  - jotform_id: "fhs_outgoing_name_placeholder"   # PLACEHOLDER
+    label: "outgoing_full_name"
+    section: fhs
+    type: text
+    verified: false
+
+  - jotform_id: "fhs_outgoing_id_placeholder"     # PLACEHOLDER
+    label: "outgoing_id"
+    section: fhs
+    type: id_num
+    verified: false
+
+  - jotform_id: "fhs_outgoing_email_placeholder"  # PLACEHOLDER
+    label: "outgoing_email"
+    section: fhs
+    type: email
+    verified: false
+
+  - jotform_id: "fhs_outgoing_phone_placeholder"  # PLACEHOLDER
+    label: "outgoing_phone"
+    section: fhs
+    type: phone
+    verified: false
+
+  # Landlord (col 84-87)
+  - jotform_id: "fhs_landlord_id_placeholder"     # PLACEHOLDER
+    label: "landlord_id"
+    section: fhs
+    type: id_num
+    verified: false
+
+  - jotform_id: "fhs_landlord_email_placeholder"  # PLACEHOLDER
+    label: "landlord_email"
+    section: fhs
+    type: email
+    verified: false
+
+  - jotform_id: "fhs_landlord_phone_placeholder"  # PLACEHOLDER
+    label: "landlord_phone"
+    section: fhs
+    type: phone
+    verified: false
+
+  - jotform_id: "fhs_landlord_name_placeholder"   # PLACEHOLDER
+    label: "landlord_full_name"
+    section: fhs
+    type: text
+    verified: false
+
+  # Partner / second tenant (col 88-92)
+  - jotform_id: "fhs_partner_name_placeholder"    # PLACEHOLDER
+    label: "partner_full_name"
+    section: fhs
+    type: text
+    verified: false
+
+  - jotform_id: "fhs_partner_id_placeholder"      # PLACEHOLDER
+    label: "partner_id"
+    section: fhs
+    type: id_num
+    verified: false
+
+  - jotform_id: "fhs_partner_email_placeholder"   # PLACEHOLDER
+    label: "partner_email"
+    section: fhs
+    type: email
+    verified: false
+
+  - jotform_id: "fhs_partner_phone_placeholder"   # PLACEHOLDER
+    label: "partner_phone"
+    section: fhs
+    type: phone
+    verified: false
+
+  # Computed summary fields (col 93-94)
+  - jotform_id: "fhs_full_address_placeholder"    # PLACEHOLDER
+    label: "full_address"
+    section: fhs
+    type: text
+    verified: false
+
+  - jotform_id: "fhs_transfer_date_placeholder"   # PLACEHOLDER
+    label: "transfer_date"
+    section: fhs
+    type: date
+    verified: false
+
+  # Package / payment (col 95-96)
+  - jotform_id: "fhs_package_placeholder"         # PLACEHOLDER
+    label: "package"
+    section: fhs
+    type: text
+    verified: false

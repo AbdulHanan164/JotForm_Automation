@@ -153,6 +153,11 @@ def run_pipeline(
     # Reuse pre_parsed if we already did it, otherwise parse now
     result.parsed = pre_parsed if pre_parsed is not None else service.parse_fields(merged)
 
+    # ── Stage 4.5: Extract business data ──────────────────────────────────────
+    # parse_fields() attaches _business (BusinessSubmission.to_dict()) to parsed.
+    # Promote it to result.business_data so it's accessible without going through parsed.
+    result.business_data = result.parsed.get("_business", {})
+
     # ── Stage 5: Document extraction ──────────────────────────────────────────
     try:
         from app.documents.extractor import extract_all

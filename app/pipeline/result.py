@@ -31,10 +31,11 @@ class PipelineResult:
     )
 
     # ── Business data (written by service) ────────────────────────────────────
-    parsed:  dict[str, Any] = field(default_factory=dict)   # semantic section-keyed fields
-    summary: dict[str, Any] = field(default_factory=dict)   # Hebrew business summary
-    missing: dict[str, Any] = field(default_factory=dict)   # {is_complete, missing_info, missing_docs}
-    email:   dict[str, str] | None = None                   # draft email (subject + body)
+    parsed:        dict[str, Any] = field(default_factory=dict)   # semantic section-keyed fields
+    summary:       dict[str, Any] = field(default_factory=dict)   # Hebrew business summary
+    missing:       dict[str, Any] = field(default_factory=dict)   # {is_complete, missing_info, missing_docs}
+    email:         dict[str, str] | None = None                   # draft email (subject + body)
+    business_data: dict[str, Any] = field(default_factory=dict)   # BusinessSubmission.to_dict()
 
     # ── Conditional logic ─────────────────────────────────────────────────────
     visibility: dict[str, bool] = field(default_factory=dict)
@@ -87,7 +88,7 @@ class PipelineResult:
 
     def to_business_dict(self) -> dict[str, Any]:
         """Operator-facing output. No JotForm IDs, no base64, no technical fields."""
-        return {
+        d: dict[str, Any] = {
             "מזהה":              self.submission_id,
             "שירות":             self.form_title or self.service_name,
             "התקבל":             self.received_at,
@@ -101,9 +102,14 @@ class PipelineResult:
             "שדות_מוסתרים":      [k for k, v in self.visibility.items() if not v],
             "טיוטת_מייל":        self.email,
         }
+        if self.business_data:
+            d["business_data"] = self.business_data
+        return d
 
     def to_raw_dict(self) -> dict[str, Any]:
         """Full technical dump for debugging and future AI use."""
+        # Exclude _business key from parsed dump (it's already in business_data)
+        parsed_clean = {k: v for k, v in self.parsed.items() if k != "_business"}
         return {
             "submission_id":    self.submission_id,
             "form_id":          self.form_id,
@@ -112,7 +118,8 @@ class PipelineResult:
             "received_at":      self.received_at,
             "review_status":    self.review_status,
             "content_type":     self.content_type,
-            "_parsed":          self.parsed,
+            "_parsed":          parsed_clean,
+            "_business":        self.business_data,
             "_summary":         self.summary,
             "_missing":         self.missing,
             "_visibility":      self.visibility,

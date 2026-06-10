@@ -35,6 +35,7 @@ S_WATER     = "water"
 S_DOCS      = "documents"
 S_PAYMENT   = "payment"
 S_SYSTEM    = "system"
+S_FHS       = "fhs"   # JotForm computed normalization columns (74-92 in Google Sheet)
 
 # ── Config path ───────────────────────────────────────────────────────────────
 _YAML_CONFIG = Path("config/field_maps/arnona.yaml")

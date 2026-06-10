@@ -107,26 +107,54 @@ def build_from_pipeline(result: Any) -> ReviewItem:
     """
     Build a ReviewItem from a PipelineResult.
     Called by the orchestrator after the pipeline completes.
+
+    Quick-view fields (name, phone, address, services) prefer the business_data
+    model when available; fall back to the Hebrew summary dict for compatibility.
     """
     summary  = result.summary or {}
-    customer = summary.get("דייר_נכנס", {})
-    prop     = summary.get("פרטי_נכס", {})
-    system   = summary.get("מידע_פנימי", {})
-    txn      = summary.get("סוג_עסקה", {})
+    bd       = result.business_data or {}
+
+    # Quick-view: prefer business_data (strongly-typed), fall back to summary
+    incoming = bd.get("incoming_tenant") or {}
+    prop_bd  = bd.get("property") or {}
+    txn_bd   = bd.get("submission") or {}
+
+    customer_name  = (
+        incoming.get("full_name")
+        or summary.get("דייר_נכנס", {}).get("שם", "")
+    )
+    customer_phone = (
+        incoming.get("phone")
+        or summary.get("דייר_נכנס", {}).get("טלפון", "")
+    )
+    customer_email = (
+        incoming.get("email")
+        or summary.get("דייר_נכנס", {}).get("אימייל", "")
+    )
+    property_address = (
+        prop_bd.get("full_address")
+        or summary.get("פרטי_נכס", {}).get("כתובת", "")
+    )
+    services = (
+        txn_bd.get("package_description")
+        or summary.get("סוג_עסקה", {}).get("שירות", "")
+    )
+    mzk_ref = summary.get("מידע_פנימי", {}).get("מספר_פנייה", "")
 
     return ReviewItem(
         submission_id     = result.submission_id,
         service_name      = result.service_name,
         form_title        = result.form_title,
         received_at       = result.received_at,
-        customer_name     = customer.get("שם", ""),
-        customer_phone    = customer.get("טלפון", ""),
-        customer_email    = customer.get("אימייל", ""),
-        property_address  = prop.get("כתובת", ""),
-        services          = txn.get("שירות", ""),
-        mzk_ref           = system.get("מספר_פנייה", ""),
+        customer_name     = customer_name,
+        customer_phone    = customer_phone,
+        customer_email    = customer_email,
+        property_address  = property_address,
+        services          = services,
+        mzk_ref           = mzk_ref,
         status            = ReviewStatus.PENDING_REVIEW,
         summary           = summary,
+        business_data     = bd,
         missing_info      = result.missing.get("missing_info", []),
         missing_docs      = result.missing.get("missing_docs", []),
         validation_issues = [i.to_dict() for i in result.validation_issues],

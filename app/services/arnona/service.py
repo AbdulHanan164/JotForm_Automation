@@ -13,13 +13,15 @@ from app.services.arnona import rules as rl
 from app.services.arnona.email_templates import draft_missing_info_email
 from app.services.arnona.conditional_logic import arnona_logic_engine
 from app.services.arnona.validators import ARNONA_VALIDATION_RULES
+from app.mappers.business_validators import BUSINESS_VALIDATION_RULES
 from app.pipeline.validator import ValidationEngine, ValidationIssue
 
 logger = logging.getLogger("webhook")
 
 FORM_ID = "251955479892982"
 
-_validation_engine = ValidationEngine(ARNONA_VALIDATION_RULES)
+_validation_engine          = ValidationEngine(ARNONA_VALIDATION_RULES)
+_business_validation_engine = ValidationEngine(BUSINESS_VALIDATION_RULES)
 
 
 class ArnonaService(BaseService):
@@ -56,6 +58,7 @@ class ArnonaService(BaseService):
             fm.S_DOCS:     {},
             fm.S_PAYMENT:  {},
             fm.S_SYSTEM:   {},
+            fm.S_FHS:      {},
             "_unmapped":   {},
         }
 
@@ -83,14 +86,29 @@ class ArnonaService(BaseService):
                     parsed["arnona"][target_label] = section_data[source_label]
                     break
 
+        # Build BusinessSubmission and attach as JSON-safe dict.
+        # Downstream stages (build_summary, detect_missing) use this.
+        try:
+            from app.mappers.business_mapper import build_from_parsed
+            parsed["_business"] = build_from_parsed(parsed).to_dict()
+        except Exception as exc:
+            logger.warning("BusinessMapper failed (non-fatal): %s", exc)
+
         return parsed
 
     # ── Step 2: build summary ─────────────────────────────────────────────────
 
     def build_summary(self, parsed: dict[str, Any]) -> dict[str, Any]:
+        bd = parsed.get("_business")
+        if bd:
+            try:
+                from app.mappers.models import BusinessSubmission
+                return BusinessSubmission.from_dict(bd).to_summary_dict()
+            except Exception as exc:
+                logger.warning("BusinessSubmission.to_summary_dict() failed: %s", exc)
         return sm.build(parsed)
 
-    # ── Step 3: detect missing (now visibility-aware) ─────────────────────────
+    # ── Step 3: detect missing (BusinessSubmission-first, raw fallback) ──────
 
     def detect_missing(
         self,
@@ -101,13 +119,23 @@ class ArnonaService(BaseService):
         if visibility is None:
             visibility = arnona_logic_engine.evaluate(parsed)
 
+        bd = parsed.get("_business")
+        if bd:
+            try:
+                from app.mappers.models import BusinessSubmission
+                from app.mappers.missing_detector import detect_missing as _biz_detect
+                bs = BusinessSubmission.from_dict(bd)
+                return _biz_detect(bs, visibility)
+            except Exception as exc:
+                logger.warning("BusinessSubmission missing-detect failed, using raw fallback: %s", exc)
+
+        # ── Raw fallback (YAML-driven services / mapper failure) ──────────────
         missing_info: list[dict] = []
         missing_docs: list[dict] = []
 
         for rule in rl.INFO_RULES:
             if not rule["required"](parsed):
                 continue
-            # Skip if the field was hidden by JotForm conditional logic
             field_label = rule.get("label", "")
             if visibility.get(field_label) is False:
                 continue
@@ -137,13 +165,15 @@ class ArnonaService(BaseService):
             "missing_docs": missing_docs,
         }
 
-    # ── Step 4: cross-document validation ────────────────────────────────────
+    # ── Step 4: cross-document validation (BusinessSubmission-first) ──────────
 
     def validate(
         self,
         parsed:          dict[str, Any],
         doc_extractions: dict[str, Any],
     ) -> list[ValidationIssue]:
+        if parsed.get("_business"):
+            return _business_validation_engine.validate(parsed, doc_extractions)
         return _validation_engine.validate(parsed, doc_extractions)
 
     # ── Step 5: draft email ───────────────────────────────────────────────────

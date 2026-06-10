@@ -50,15 +50,18 @@ class ReviewItem:
     review_notes:    str          = ""
 
     # Full data (stored in review file)
-    summary:         dict[str, Any] = field(default_factory=dict)
-    missing_info:    list[dict]     = field(default_factory=list)
-    missing_docs:    list[dict]     = field(default_factory=list)
-    validation_issues: list[dict]  = field(default_factory=list)
-    doc_extractions: dict[str, Any]= field(default_factory=dict)
-    draft_email:     dict[str, str] | None = None
+    summary:          dict[str, Any] = field(default_factory=dict)
+    missing_info:     list[dict]     = field(default_factory=list)
+    missing_docs:     list[dict]     = field(default_factory=list)
+    validation_issues: list[dict]   = field(default_factory=list)
+    doc_extractions:  dict[str, Any] = field(default_factory=dict)
+    draft_email:      dict[str, str] | None = None
+
+    # Business-centric model (BusinessSubmission.to_dict()) — operator-facing
+    business_data:    dict[str, Any] = field(default_factory=dict)
 
     # Operator can edit the email before approving
-    final_email:     dict[str, str] | None = None
+    final_email:      dict[str, str] | None = None
 
     @property
     def is_actionable(self) -> bool:
@@ -96,6 +99,7 @@ class ReviewItem:
             "reviewed_by":      self.reviewed_by,
             "review_notes":     self.review_notes,
             "summary":          self.summary,
+            "business_data":    self.business_data,
             "missing_info":     self.missing_info,
             "missing_docs":     self.missing_docs,
             "validation_issues":self.validation_issues,
@@ -119,6 +123,7 @@ class ReviewItem:
             mzk_ref          = data.get("mzk_ref", ""),
             review_notes     = data.get("review_notes", ""),
             summary          = data.get("summary", {}),
+            business_data    = data.get("business_data", {}),
             missing_info     = data.get("missing_info", []),
             missing_docs     = data.get("missing_docs", []),
             validation_issues= data.get("validation_issues", []),
