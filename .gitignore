@@ -14,12 +14,20 @@ build/
 .venv/
 venv/
 
-# Data — submissions contain PII, never commit
-data/submissions/
-data/processed/
+# Data — contains client PII, never commit ANY of it.
+# All directories are auto-created at startup (app/config.py).
+data/
 
 # Logs
 logs/
+
+# Node (one-off docx generation scripts only — not part of the service)
+node_modules/
+package.json
+package-lock.json
+
+# Office temp files
+~$*
 
 # Test outputs
 test_results/

@@ -1,0 +1,50 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Render Blueprint — מה זה קל JotForm Webhook
+#
+# Deploy: Render Dashboard → New → Blueprint → select this repo.
+# Render reads this file and provisions the service + persistent disk.
+#
+# IMPORTANT: the persistent disk requires a paid instance (Starter or above).
+# Without it the filesystem is EPHEMERAL — the review queue, submissions and
+# downloaded documents are wiped on every deploy and restart.
+# ═══════════════════════════════════════════════════════════════════════════
+
+services:
+  - type: web
+    name: mazekal-webhook
+    runtime: python
+    plan: starter                       # disk requires a paid plan
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true                    # deploy on every push to master
+
+    disk:
+      name: mazekal-data
+      mountPath: /var/data
+      sizeGB: 1
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.4"                 # dev runs 3.14.0 — set that for parity if available
+
+      # ── Data directories → persistent disk ─────────────────────────────────
+      # app/config.py creates these automatically at startup.
+      - key: SUBMISSIONS_DIR
+        value: /var/data/submissions
+      - key: PROCESSED_DIR
+        value: /var/data/processed
+      - key: REVIEW_DIR
+        value: /var/data/review_queue
+      - key: DOCUMENTS_DIR
+        value: /var/data/documents
+      - key: LOGS_DIR
+        value: /var/data/logs
+
+      # ── Secrets — set in the Render dashboard, never in this file ──────────
+      - key: OPERATOR_API_KEY           # protects /review, /admin, /submissions
+        sync: false
+      - key: WEBHOOK_SECRET             # ?token= on the JotForm webhook URL
+        sync: false
+      - key: JOTFORM_API_KEY            # optional — form definition sync
+        sync: false

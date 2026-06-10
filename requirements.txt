@@ -1,11 +1,10 @@
 # ── Core (required) ───────────────────────────────────────────────────────────
-fastapi==0.115.5
-uvicorn[standard]==0.32.1
-python-multipart==0.0.12
-pydantic-settings==2.6.1
-
-# ── YAML service config (required for config-driven services) ─────────────────
-pyyaml>=6.0
+# Versions match the environment the 185-test suite passes against (v0.8.2).
+fastapi==0.135.1
+uvicorn[standard]==0.41.0
+python-multipart==0.0.22
+pydantic-settings==2.13.1
+pyyaml==6.0.3
 
 # ── Optional integrations (uncomment when ready) ──────────────────────────────
 
