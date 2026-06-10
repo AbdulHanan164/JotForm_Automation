@@ -84,9 +84,53 @@ def _summary_list(items):
 
 @router.get("/{submission_id}", summary="Full review item")
 def get_review(submission_id: str, _op: _Auth = None):
-    """Return the full review item for an operator."""
+    """
+    Return the full review item for an operator.
+
+    Response includes two extra fields computed lazily here (not in the pipeline):
+      operator_summary — Layer A: 30-second triage view with inline ⚠️ and recommendation.
+      detail_record    — Layer B: full archive with account numbers and internal refs.
+    """
     item = _get_or_404(submission_id)
-    return JSONResponse(content=item.to_dict())
+    payload = item.to_dict()
+
+    # Compute Layer A + B from the stored pieces (business_data + pipeline outputs).
+    # This is intentionally lazy — Stage 7 runs before missing/validation detection,
+    # so we can only build the complete inline-warning view here at read time.
+    operator_summary: Any = None
+    detail_record:    Any = None
+
+    bd = item.business_data
+    if bd:
+        try:
+            from app.mappers.models import BusinessSubmission
+            from app.services.arnona.summary import build_layer_a, build_layer_b
+
+            bs = BusinessSubmission.from_dict(bd)
+
+            operator_summary = build_layer_a(
+                bs,
+                missing_info       = item.missing_info       or [],
+                missing_docs       = item.missing_docs       or [],
+                validation_issues  = [
+                    vi if isinstance(vi, dict) else vi.__dict__
+                    for vi in (item.validation_issues or [])
+                ],
+            )
+
+            detail_record = build_layer_b(
+                bs,
+                mzk_ref      = item.mzk_ref      or "",
+                refund_id    = (item.summary or {}).get("מידע_פנימי", {}).get("מזהה_החזר", ""),
+                submitted_at = item.received_at   or "",
+            )
+        except Exception as exc:
+            logger.warning("Layer A/B build failed for %s: %s", submission_id, exc)
+
+    payload["operator_summary"] = operator_summary
+    payload["detail_record"]    = detail_record
+
+    return JSONResponse(content=payload)
 
 
 @router.get("/{submission_id}/email", summary="Draft email (plain text)")
