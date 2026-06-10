@@ -116,6 +116,7 @@ def get_review(submission_id: str, _op: _Auth = None):
                     vi if isinstance(vi, dict) else vi.__dict__
                     for vi in (item.validation_issues or [])
                 ],
+                mzk_ref            = item.mzk_ref or "",
             )
 
             detail_record = build_layer_b(

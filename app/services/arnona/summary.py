@@ -6,8 +6,8 @@ Two-layer design:
   Layer A — executive operator summary (30-second read).
     • Only relevant sections shown (unordered services hidden entirely).
     • Empty fields omitted — no "לא סופק" rows.
-    • Missing items and validation warnings surfaced inline on the field.
-    • Ends with a single operator recommendation.
+    • Missing items and validation warnings surfaced inline on the field —
+      the single source of truth; no separate recommendation section.
     • Built from: BusinessSubmission + missing_info + missing_docs + validation_issues.
 
   Layer B — detailed submission record.
@@ -32,11 +32,32 @@ _N = "לא סופק"
 # Layer A — executive operator summary
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Account-number missing-item IDs that are EXPECTED to be absent on new
+# registrations (כניסה): the municipality / water authority creates these
+# numbers only after the registration is processed, so flagging them ⚠️ on
+# every arrival submission would train operators to ignore the warning.
+# Rule: suppress these IDs from inline ⚠️ when the transaction is a new
+# arrival (transaction_type contains "כניסה" or "new"/"arrival"). They are
+# still rendered as plain "חסר" lines, just without the warning marker.
+_ACCOUNT_IDS_EXPECTED_MISSING_ON_ARRIVAL = {
+    "arnona_property_number",
+    "arnona_customer_number",
+    "arnona_id_number",
+}
+
+
+def _is_new_registration(transaction_type: str) -> bool:
+    """True when account numbers don't exist yet (created after processing)."""
+    t = (transaction_type or "").lower()
+    return ("כניסה" in t) or ("new" in t) or ("arrival" in t)
+
+
 def build_layer_a(
     bs: Any,                        # BusinessSubmission
     missing_info: list[dict],
     missing_docs: list[dict],
     validation_issues: list[dict],
+    mzk_ref: str = "",
 ) -> dict[str, Any]:
     """
     Build Layer A: the 30-second operator decision summary.
@@ -48,15 +69,22 @@ def build_layer_a(
       - Append " ⚠️" inline when a validation rule fired on a field.
       - Partner section collapses to one line when no partner exists.
       - Outgoing tenant + landlord share one section.
-      - Recommendation is the last field — one action sentence.
+      - Inline warnings are the ONLY signal — no recommendation section
+        (it duplicated the inline ⚠️ and added dead reading time).
+      - Account-number warnings are suppressed for new registrations —
+        see _ACCOUNT_IDS_EXPECTED_MISSING_ON_ARRIVAL above.
     """
     from app.mappers.models import Documents
+
+    new_registration = _is_new_registration(bs.submission.transaction_type)
 
     # ── Lookup sets ──────────────────────────────────────────────────────────
     missing_ids: set[str] = (
         {item["id"] for item in (missing_info or [])}
         | {item["id"] for item in (missing_docs or [])}
     )
+    if new_registration:
+        missing_ids -= _ACCOUNT_IDS_EXPECTED_MISSING_ON_ARRIVAL
     validation_map: dict[str, str] = {
         issue["id"]: issue.get("label", "")
         for issue in (validation_issues or [])
@@ -286,11 +314,21 @@ def build_layer_a(
     w = bs.water_accounts
 
     if has_arnona:
-        acct_lines.extend(_collect(
-            _f("מספר נכס ארנונה",    a.property_number,       "arnona_property_number"),
-            _f("מספר לקוח ארנונה",   a.payer_number,          "arnona_customer_number"),
-            _f("מספר זיהוי ארנונה",  a.identification_number, "arnona_id_number"),
-        ))
+        arnona_fields = [
+            ("מספר נכס ארנונה",   a.property_number,       "arnona_property_number"),
+            ("מספר לקוח ארנונה",  a.payer_number,          "arnona_customer_number"),
+            ("מספר זיהוי ארנונה", a.identification_number, "arnona_id_number"),
+        ]
+        if new_registration:
+            # Numbers don't exist yet — plain "חסר", no ⚠️ (see rule above)
+            acct_lines.extend(
+                f"{label}: {value}" if value else f"{label}: חסר"
+                for label, value, _mid in arnona_fields
+            )
+        else:
+            acct_lines.extend(_collect(
+                *(_f(label, value, mid) for label, value, mid in arnona_fields)
+            ))
 
     if has_water:
         wp = _f("מספר נכס מים",  w.property_number)
@@ -334,35 +372,22 @@ def build_layer_a(
         "lines":   doc_lines,
     }
 
-    # ─── Recommendation ────────────────────────────────────────────────────────
-    all_missing_labels = (
-        [item["label"] for item in (missing_info or [])]
-        + [item["label"] for item in (missing_docs or [])]
-    )
+    # ─── Status ───────────────────────────────────────────────────────────────
+    # Missing items that were suppressed (expected-absent account numbers on a
+    # new registration) don't count toward the status either — otherwise every
+    # arrival submission would read "ממתין להשלמת פרטים" forever.
+    actionable_missing = [
+        item for item in ((missing_info or []) + (missing_docs or []))
+        if not (new_registration
+                and item["id"] in _ACCOUNT_IDS_EXPECTED_MISSING_ON_ARRIVAL)
+    ]
     has_errors = any(
         i.get("severity") == "error" for i in (validation_issues or [])
     )
 
-    first_name = (
-        (inc.first_name or "")
-        or (inc.full_name.split()[0] if inc.full_name else "")
-        or "הלקוח"
-    )
-
-    if all_missing_labels:
-        items_str      = ", ".join(all_missing_labels)
-        recommendation = f"📧 יש לבקש מ{first_name}: {items_str}"
-    elif has_errors:
-        recommendation = "🔍 בדיקה ידנית נדרשת לפני עיבוד — קיימות שגיאות"
-    elif validation_issues:
-        recommendation = "⚠️ בדוק אזהרות — ניתן לאשר לאחר בדיקה"
-    else:
-        recommendation = "✅ ניתן לעיבוד — שלח לעיר"
-
-    # ─── Status ───────────────────────────────────────────────────────────────
     if has_errors:
         status, status_text = "error",   "❌ שגיאות — נדרשת בדיקה ידנית"
-    elif all_missing_labels or validation_issues:
+    elif actionable_missing or validation_issues:
         status, status_text = "warning", "⚠️ ממתין להשלמת פרטים"
     else:
         status, status_text = "ok",      "✅ מלא — ניתן לעיבוד"
@@ -376,15 +401,17 @@ def build_layer_a(
     sections.append(docs_section)
 
     # ─── Header ───────────────────────────────────────────────────────────────
-    header_date = bs.dates.move_in or ""
-    header      = f"סיכום הגשה | {inc.full_name} | {header_date}"
+    # Client format opens with the case reference: "הנה סיכום ההגשה MZK6854"
+    if mzk_ref:
+        header = f"הנה סיכום ההגשה {mzk_ref}"
+    else:
+        header = f"סיכום הגשה | {inc.full_name} | {bs.dates.move_in or ''}"
 
     return {
-        "header":         header,
-        "status":         status,
-        "status_text":    status_text,
-        "sections":       sections,
-        "recommendation": recommendation,
+        "header":      header,
+        "status":      status,
+        "status_text": status_text,
+        "sections":    sections,
     }
 
 
