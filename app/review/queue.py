@@ -135,10 +135,17 @@ def build_from_pipeline(result: Any) -> ReviewItem:
         prop_bd.get("full_address")
         or summary.get("פרטי_נכס", {}).get("כתובת", "")
     )
+    txn_summary = summary.get("סוג_עסקה", {})
     services = (
-        txn_bd.get("package_description")
-        or summary.get("סוג_עסקה", {}).get("שירות", "")
+        txn_bd.get("transfer_to")
+        or txn_bd.get("package_description")
+        or txn_summary.get("לאן_מעבירים")
+        or txn_summary.get("שירותים")
+        or txn_summary.get("שירות")
+        or ""
     )
+    if services == "לא סופק":
+        services = ""
     mzk_ref = summary.get("מידע_פנימי", {}).get("מספר_פנייה", "")
     # BusinessSubmission.to_summary_dict() has no MZK field and emits the
     # "לא סופק" placeholder — fall back to the parsed system section.

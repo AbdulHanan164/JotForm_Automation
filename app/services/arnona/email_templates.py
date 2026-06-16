@@ -30,7 +30,8 @@ def _first_name(summary: dict[str, Any]) -> str:
 
 def _ref_number(summary: dict[str, Any]) -> str:
     internal = summary.get("מידע_פנימי", {})
-    return internal.get("מספר_פנייה", "")
+    ref = internal.get("מספר_פנייה", "")
+    return "" if not ref or ref == "לא סופק" else ref
 
 
 def _address(summary: dict[str, Any]) -> str:
@@ -53,7 +54,15 @@ def draft_missing_info_email(
     first_name = _first_name(summary)
     ref_number = _ref_number(summary)
     address    = _address(summary)
-    services   = summary.get("סוג_עסקה", {}).get("שירות", "העברת חשבון")
+    txn = summary.get("סוג_עסקה", {})
+    services = (
+        txn.get("לאן_מעבירים")
+        or txn.get("שירותים")
+        or txn.get("שירות")
+        or "העברת חשבון"
+    )
+    if services == "לא סופק":
+        services = "העברת חשבון"
 
     ref_line = f"(מספר פנייה: {ref_number})" if ref_number else ""
 
@@ -126,7 +135,15 @@ def draft_complete_confirmation_email(
     first_name = _first_name(summary)
     ref_number = _ref_number(summary)
     address    = _address(summary)
-    services   = summary.get("סוג_עסקה", {}).get("שירות", "העברת חשבון")
+    txn = summary.get("סוג_עסקה", {})
+    services = (
+        txn.get("לאן_מעבירים")
+        or txn.get("שירותים")
+        or txn.get("שירות")
+        or "העברת חשבון"
+    )
+    if services == "לא סופק":
+        services = "העברת חשבון"
 
     ref_line = f"(מספר פנייה: {ref_number})" if ref_number else ""
 
