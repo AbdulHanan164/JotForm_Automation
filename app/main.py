@@ -80,6 +80,23 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("JotForm sync: JOTFORM_API_KEY not set — skipping")
 
+    # Reconcile incomplete document jobs (Group B — feature-flagged, off by default)
+    if settings.enable_document_jobs:
+        try:
+            from app.documents.jobs import reconcile
+            from app.integrations.jotform.client import get_client
+            client = get_client()
+            source = client.get_submission_files if client else (lambda _sid: [])
+            summary = reconcile(source)
+            if summary["rerun"] or summary["exhausted"]:
+                logger.info("Document jobs reconciled: %s", summary)
+            else:
+                logger.info("Document jobs: none pending")
+        except Exception as exc:
+            logger.warning("Document job reconcile failed (non-fatal): %s", exc)
+    else:
+        logger.info("Document jobs: disabled (enable_document_jobs=false)")
+
     logger.info("=" * 55)
     yield
     logger.info("Shutting down.")
@@ -227,6 +244,33 @@ def discover_fields(submission_id: str, _op: _Auth = None):
             "config/field_maps/arnona.yaml and set verified: true"
         ),
     }
+
+
+# ── Document jobs (requires auth) — Group B operator controls ─────────────────
+
+@app.get("/admin/documents/{submission_id}", tags=["admin"])
+def get_document_job(submission_id: str, _op: _Auth = None):
+    """Return the document-acquisition job record for a submission."""
+    from app.documents.jobs import load_job
+    job = load_job(submission_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail=f"No document job for {submission_id}")
+    return JSONResponse(content=job.to_dict())
+
+
+@app.post("/admin/documents/retry/{submission_id}", tags=["admin"])
+def retry_document_job(submission_id: str, _op: _Auth = None):
+    """Manually re-run document acquisition for a submission.
+
+    Works whether or not auto-jobs are enabled — uses the JotForm API adapter
+    when a key is configured, otherwise records a retryable no-op.
+    """
+    from app.documents.jobs import retry
+    from app.integrations.jotform.client import get_client
+    client = get_client()
+    source = client.get_submission_files if client else (lambda _sid: [])
+    job = retry(submission_id, source)
+    return JSONResponse(content=job.to_dict())
 
 
 if __name__ == "__main__":

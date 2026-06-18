@@ -39,7 +39,10 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from app.documents.contracts import FileAnswer
 
 logger = logging.getLogger("downloader")
 
@@ -142,6 +145,101 @@ def download_submission_documents(
     )
 
     return parsed, manifest_data
+
+
+def download_files(submission_id: str, files: list["FileAnswer"]) -> dict[str, Any]:
+    """Download an explicit list of ``FileAnswer`` for a submission (Group A).
+
+    Unlike ``download_submission_documents`` (which walks a parsed dict for http
+    URLs), this takes a known list produced by the JotForm API adapter. Each
+    file is downloaded independently — one failure never stops the rest — then
+    persisted via ``storage.store_file`` and recorded in ``_manifest.json``.
+
+    Returns the manifest dict:
+      {submission_id, downloaded, failed, files: {key: entry}}
+    where each entry carries source_url, local_path, size_bytes, sha256, error.
+    """
+    from app.documents import storage
+
+    entries: dict[str, Any] = {}
+    downloaded = 0
+    failed = 0
+
+    for fa in files:
+        key = fa.question_id or fa.label or f"file_{len(entries)}"
+        entry: dict[str, Any] = {
+            "question_id":   fa.question_id,
+            "doc_type":      fa.doc_type,
+            "label":         fa.label,
+            "source_url":    fa.url,
+            "local_path":    "",
+            "size_bytes":    0,
+            "sha256":        "",
+            "downloaded_at": datetime.now(timezone.utc).isoformat(),
+            "error":         "",
+        }
+        try:
+            content, content_type = _fetch_bytes(fa.url)
+            ext  = _guess_extension(fa.url, content_type, fa.label)
+            path = storage.store_file(submission_id, fa, content, ext)
+            entry["local_path"] = str(path)
+            entry["size_bytes"] = len(content)
+            entry["sha256"]     = storage.sha256_hex(content)
+            downloaded += 1
+            logger.info("download_files: %s → %s (%d bytes)", key, path, len(content))
+        except FileTooLargeError:
+            entry["error"] = f"File exceeds size limit ({_MAX_BYTES // 1024 // 1024} MB)"
+            failed += 1
+        except urllib.error.HTTPError as exc:
+            entry["error"] = f"HTTP {exc.code}: {exc.reason}"
+            failed += 1
+        except urllib.error.URLError as exc:
+            entry["error"] = f"URL error: {exc.reason}"
+            failed += 1
+        except Exception as exc:
+            entry["error"] = str(exc)
+            failed += 1
+
+        if entry["error"]:
+            logger.warning("download_files: %s failed: %s", key, entry["error"])
+        entries[key] = entry
+
+    manifest = {
+        "submission_id": submission_id,
+        "downloaded_at": datetime.now(timezone.utc).isoformat(),
+        "downloaded":    downloaded,
+        "failed":        failed,
+        "files":         entries,
+    }
+    storage.write_manifest(submission_id, manifest)
+    logger.info(
+        "download_files complete: %d ok, %d failed (submission %s)",
+        downloaded, failed, submission_id,
+    )
+    return manifest
+
+
+def _fetch_bytes(url: str) -> tuple[bytes, str]:
+    """Fetch a URL with the JotForm API key (if set), a timeout, and a size cap.
+
+    Returns (content_bytes, content_type). Raises on HTTP/URL errors and
+    FileTooLargeError — callers handle per-file isolation.
+    """
+    try:
+        from app.config import settings
+        timeout = settings.doc_download_timeout or _TIMEOUT
+    except Exception:
+        timeout = _TIMEOUT
+
+    request_url = _with_api_key(url)
+    req = urllib.request.Request(
+        request_url,
+        headers={"User-Agent": "mazekal-webhook/0.6"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        content_type = resp.headers.get("Content-Type", "")
+        data = _read_with_limit(resp)
+    return data, content_type
 
 
 def _download_file(url: str, dest_dir: Path, label: str) -> dict[str, Any]:

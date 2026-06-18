@@ -112,23 +112,36 @@ async def receive_webhook(
         headers      = dict(request.headers),
     )
 
-    # ── Step 6: Download uploaded documents ───────────────────────────────────
-    # Do this BEFORE saving — local_path is included in saved records
-    if result.parsed and result.submission_id != "unknown":
-        try:
-            from app.documents.downloader import download_submission_documents
-            result.parsed, _manifest = download_submission_documents(
-                result.parsed, result.submission_id
-            )
-        except Exception as exc:
-            logger.warning("Document download error (non-fatal): %s", exc)
+    # ── Step 6: Document acquisition ──────────────────────────────────────────
+    # LEGACY (flag OFF, default): inline download — UNCHANGED production behavior.
+    # GROUP B (flag ON): handled by a non-blocking durable job enqueued in Step 8.
+    if not settings.enable_document_jobs:
+        if result.parsed and result.submission_id != "unknown":
+            try:
+                from app.documents.downloader import download_submission_documents
+                result.parsed, _manifest = download_submission_documents(
+                    result.parsed, result.submission_id
+                )
+            except Exception as exc:
+                logger.warning("Document download error (non-fatal): %s", exc)
 
     # ── Step 7: Persist all three outputs ─────────────────────────────────────
     save_raw(result, settings.submissions_dir)
     save_business(result, settings.processed_dir)
     save_for_review(result)
 
-    # ── Step 8: Google Sheets sync (background — does NOT block response) ─────
+    # ── Step 8: Document job (Group B — feature-flagged, non-blocking) ────────
+    # Enqueued AFTER save so the review item exists for the job to upgrade.
+    # Does NOT block the response: the actual fetch+download runs in background.
+    if settings.enable_document_jobs and result.submission_id != "unknown":
+        try:
+            from app.documents.jobs import enqueue
+            enqueue(result.submission_id)
+            background_tasks.add_task(_run_document_job_bg, result.submission_id)
+        except Exception as exc:
+            logger.warning("Could not enqueue document job (non-fatal): %s", exc)
+
+    # ── Step 9: Google Sheets sync (background — does NOT block response) ─────
     background_tasks.add_task(_sync_to_sheets_bg, result)
 
     # ── Step 9: Log and return ────────────────────────────────────────────────
@@ -178,6 +191,27 @@ def _check_duplicate(submission_id: str) -> dict | None:
     except Exception as exc:
         logger.warning("Idempotency check failed (non-fatal): %s", exc)
     return None
+
+
+# ── Background document job (Group B — only runs when flag is ON) ────────────
+
+def _run_document_job_bg(submission_id: str) -> None:
+    """Fetch finalized file URLs from the JotForm API and download them.
+
+    Runs AFTER the webhook response is sent. The file source is the JotForm API
+    adapter; if no API key is configured the job is recorded (retryable) with no
+    downloads, so it can be retried later once the key is set.
+    """
+    try:
+        from app.documents.jobs import run_job
+        from app.integrations.jotform.client import get_client
+        client = get_client()
+        if client is None:
+            run_job(submission_id, lambda _sid: [])
+            return
+        run_job(submission_id, client.get_submission_files)
+    except Exception as exc:
+        logger.error("Document job background error for %s: %s", submission_id, exc)
 
 
 # ── Background Sheets sync ────────────────────────────────────────────────────

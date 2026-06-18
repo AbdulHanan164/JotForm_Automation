@@ -314,17 +314,33 @@ fields:
   # NOTE: presence semantics follow v0.3 — a value counts as present only if
   # it is a base64 data-URI or an http(s) URL. Relative JotForm
   # "pending-submissions" paths are placeholders for unfinalized uploads.
+  # Identity document — three possible inputs on this form, validated against
+  # 30 real submissions (fill rate): q34 file-upload (20/30), q35 camera
+  # widget (9/30), q33 camera widget (0/30 but a valid input). All three carry
+  # the same document and map to the same label.
+  - jotform_id: "q34_input34"
+    label: "תעודת_זהות"
+    section: documents
+    type: file
+    verified: true                     # "להעלות צילום של תעודת זהות" — primary upload
+
   - jotform_id: "q35_input35"
     label: "תעודת_זהות"
     section: documents
     type: file
-    verified: true
+    verified: true                     # "צלם תעודת זהות" — camera widget
+
+  - jotform_id: "q33_input33"
+    label: "תעודת_זהות"
+    section: documents
+    type: file
+    verified: true                     # "צילום תעודת זהות" — camera widget
 
   - jotform_id: "q181_input181"
     label: "חתימה"
     section: documents
     type: signature
-    verified: true
+    verified: true                     # "חתימה דיגיטלית" — present in 30/30
 
   - jotform_id: "q467_typeA467"
     label: "תנאים"
@@ -338,29 +354,31 @@ fields:
     type: bool
     verified: true                     # "הוסכם"
 
-  - jotform_id: "q81_arnonaBill81"     # PLACEHOLDER — production ID unknown
-    label: "חשבון_ארנונה"
-    section: documents
-    type: file
-    verified: false
-
-  - jotform_id: "q82_leaseContract82"  # PLACEHOLDER — production ID unknown
-    label: "חוזה_שכירות"
-    section: documents
-    type: file
-    verified: false
-
-  - jotform_id: "q84_tabu84"           # PLACEHOLDER
-    label: "נסח_טאבו"
-    section: documents
-    type: file
-    verified: false
-
-  - jotform_id: "q85_corpCert85"       # PLACEHOLDER
+  # Corporate certificate (B2B only) — q669 file-upload (1/30) plus q667/q668
+  # camera widgets (0/30 but valid). All map to the same label.
+  - jotform_id: "q669_input669"
     label: "תעודת_התאגדות"
     section: documents
     type: file
-    verified: false
+    verified: true                     # "להעלות צילום של תעודת התאגדות" — upload
+
+  - jotform_id: "q667_input667"
+    label: "תעודת_התאגדות"
+    section: documents
+    type: file
+    verified: true                     # "צילום תעודת התאגדות" — camera widget
+
+  - jotform_id: "q668_input668"
+    label: "תעודת_התאגדות"
+    section: documents
+    type: file
+    verified: true                     # "צלם תעודת התאגדות" — camera widget
+
+  # NOTE — lease (חוזה שכירות), arnona bill (חשבון ארנונה) and tabu extract
+  # (נסח טאבו) are NOT uploaded on this form. The form's own text (q466/q468/
+  # q470) states they are requested later by email after review. They are
+  # therefore intentionally absent here. Their "missing document" detection
+  # lives in business logic (REQUIRED_DOCS), which is unchanged.
 
   # ── Payment ────────────────────────────────────────────────────────────────
   - jotform_id: "q422_amount"

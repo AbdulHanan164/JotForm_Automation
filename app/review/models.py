@@ -63,6 +63,10 @@ class ReviewItem:
     # Operator can edit the email before approving
     final_email:      dict[str, str] | None = None
 
+    # Document acquisition state (Group A). "" = not tracked (legacy / jobs off).
+    # Set by the document job: docs_pending | ready | partial | failed.
+    documents_status: str = ""
+
     @property
     def is_actionable(self) -> bool:
         """True if operator still needs to act on this."""
@@ -106,6 +110,7 @@ class ReviewItem:
             "doc_extractions":  self.doc_extractions,
             "draft_email":      self.draft_email,
             "final_email":      self.final_email,
+            "documents_status": self.documents_status,
         }
 
     @classmethod
@@ -130,6 +135,7 @@ class ReviewItem:
             doc_extractions  = data.get("doc_extractions", {}),
             draft_email      = data.get("draft_email"),
             final_email      = data.get("final_email"),
+            documents_status = data.get("documents_status", ""),
         )
         try:
             item.status = ReviewStatus(data.get("status", "pending_review"))

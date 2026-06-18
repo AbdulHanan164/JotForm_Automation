@@ -15,11 +15,21 @@ class Settings(BaseSettings):
     log_level:   str  = "INFO"
 
     # ── Data directories ──────────────────────────────────────────────────────
-    submissions_dir: Path = Path("data/submissions")   # raw full payloads
-    processed_dir:   Path = Path("data/processed")     # clean business summaries
-    review_dir:      Path = Path("data/review_queue")  # human review queue
-    documents_dir:   Path = Path("data/documents")     # downloaded uploaded files
-    logs_dir:        Path = Path("logs")
+    submissions_dir:   Path = Path("data/submissions")    # raw full payloads
+    processed_dir:     Path = Path("data/processed")      # clean business summaries
+    review_dir:        Path = Path("data/review_queue")   # human review queue
+    documents_dir:     Path = Path("data/documents")      # downloaded uploaded files
+    document_jobs_dir: Path = Path("data/document_jobs")  # durable doc-acquisition jobs
+    logs_dir:          Path = Path("logs")
+
+    # ── Document acquisition (Group A infra) ──────────────────────────────────
+    # enable_document_jobs: feature flag for the background document pipeline
+    #   (Group B). OFF by default → the webhook keeps its current behavior
+    #   exactly. Only flip ON after the JotForm API response shape is validated
+    #   against a real submission.
+    enable_document_jobs: bool = False
+    doc_download_timeout: int  = 30   # seconds per file
+    doc_max_attempts:     int  = 3    # job retry cap
 
     # ── Security — MUST be set before production ──────────────────────────────
     #
@@ -64,6 +74,7 @@ for _dir in (
     settings.processed_dir,
     settings.review_dir,
     settings.documents_dir,
+    settings.document_jobs_dir,
     settings.logs_dir,
 ):
     _dir.mkdir(parents=True, exist_ok=True)

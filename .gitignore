@@ -1,5 +1,10 @@
 # Environment & secrets
 .env
+.env.*
+!.env.example
+
+# JotForm API response cache (regenerated at runtime)
+config/forms/
 
 # Python
 __pycache__/
