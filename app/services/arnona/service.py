@@ -234,11 +234,16 @@ class ArnonaService(BaseService):
                 return {"present": True, "url": ""}
             if sv.startswith("http"):
                 return {"present": True, "url": sv}
-            # Relative JotForm paths ("uploads/.../pending-submissions/...")
-            # are placeholders for uploads that never finalized — v0.3 ground
-            # truth treats them as absent, and the downloader can't fetch them.
-            # Keep the path OUT of "url": every presence check downstream
-            # treats a non-empty url as an attached file.
+            if "pending-submissions" in sv:
+                # JotForm delivers a finalized upload via a transient
+                # "uploads/.../pending-submissions/..." reference in the webhook
+                # body. The file IS real — the JotForm API exposes its final URL
+                # once the submission completes (verified 11/11 signatures:
+                # every pending-submissions path resolved to a finalized URL).
+                # Treat as present; keep the path for later API-based resolution.
+                return {"present": True, "url": "", "pending_path": sv}
+            # Empty value or a widget button label (e.g. "להעלות קובץ") — the
+            # field carries no upload, so it is genuinely absent.
             return {"present": False, "url": "", "pending_path": sv}
         if ftype == "bool":
             return safe_str(value).lower() in ("accepted", "הוסכם", "true", "1", "yes", "כן")

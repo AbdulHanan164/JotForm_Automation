@@ -36,15 +36,18 @@ from app.mappers.models import BusinessSubmission
 from app.mappers.missing_detector import detect_missing
 from app.review import queue as Q
 from app.review.queue import build_from_pipeline
+from app.services.arnona.email_templates import draft_missing_info_email
 
 QUEUE_DIR = "/var/data/review_queue"
 ARCHIVE_DIR = "/var/data/submissions"
 
 # Fields recomputed by parsing/detection — everything else is preserved.
+# draft_email is regenerated from the new Mazekal-style template (Step 5B);
+# final_email (operator-approved) and status are NEVER touched.
 RECOMPUTED_KEYS = (
     "business_data", "summary", "missing_info", "missing_docs",
     "customer_name", "customer_phone", "customer_email",
-    "property_address", "services",
+    "property_address", "services", "draft_email",
 )
 
 
@@ -102,13 +105,16 @@ def main(mode: str) -> None:
         visibility = arnona_logic_engine.evaluate(parsed)
         missing = detect_missing(bs, visibility)
 
+        new_email = draft_missing_info_email(
+            summary, missing.get("missing_info", []), missing.get("missing_docs", [])
+        )
         shim = _Shim(
             summary=summary, business_data=bd, parsed=parsed, missing=missing,
             submission_id=sid, service_name=existing.get("service_name", ""),
             form_title=existing.get("form_title", ""),
             received_at=existing.get("received_at", ""),
             validation_issues=[], doc_extractions=existing.get("doc_extractions", {}),
-            email=None,
+            email=new_email,
         )
         fresh = build_from_pipeline(shim).to_dict()
 
