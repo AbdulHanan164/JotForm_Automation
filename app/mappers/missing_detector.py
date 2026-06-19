@@ -159,21 +159,23 @@ def _detect_info(bs: BusinessSubmission, vis: dict[str, bool]) -> list[dict]:
         _flag("owner_phone", "טלפון (בעל הבית)", "נדרש לאישור ההעברה מול בעל הבית")
 
     # ── Arnona account numbers ────────────────────────────────────────────────
-    # Always required: this is exclusively an arnona transfer service.
-    # Fields hidden by city-specific conditional logic (e.g. Ramat Gan rule 2)
-    # are caught by the visibility check in _flag() and silently skipped.
+    # Only required when ארנונה is among the selected services.
+    # Fields hidden by city-specific conditional logic (e.g. Ramat Gan rule 2,
+    # Jerusalem rule, Cholon rule) are caught by the visibility check in _flag()
+    # and silently skipped.
 
-    if not _present(bs.arnona_accounts.property_number):
-        _flag("arnona_property_number", "מספר_נכס",
-              "נדרש לרישום חשבון הארנונה")
+    if "ארנונה" in bs.submission.services_selected:
+        if not _present(bs.arnona_accounts.property_number):
+            _flag("arnona_property_number", "מספר_נכס",
+                  "נדרש לרישום חשבון הארנונה")
 
-    if not _present(bs.arnona_accounts.payer_number):
-        _flag("arnona_customer_number", "מספר_לקוח",
-              "מספר לקוח/משלם ארנונה — מופיע בחשבון הארנונה")
+        if not _present(bs.arnona_accounts.payer_number):
+            _flag("arnona_customer_number", "מספר_לקוח",
+                  "מספר לקוח/משלם ארנונה — מופיע בחשבון הארנונה")
 
-    if not _present(bs.arnona_accounts.identification_number):
-        _flag("arnona_id_number", "מספר_זיהוי_נכס",
-              "מספר זיהוי הנכס — מופיע בחשבון הארנונה")
+        if not _present(bs.arnona_accounts.identification_number):
+            _flag("arnona_id_number", "מספר_זיהוי_נכס",
+                  "מספר זיהוי הנכס — מופיע בחשבון הארנונה")
 
     return items
 

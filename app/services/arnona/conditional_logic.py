@@ -97,6 +97,34 @@ ARNONA_CONDITIONAL_RULES: list[ConditionalRule] = [
         action  = "hide",
         targets = ["תעודת_זהות"],  # personal ID hidden for companies
     ),
+
+    # Rule 7 — Jerusalem arnona uses מספר_זיהוי_נכס only (not מספר_נכס / מספר_לקוח)
+    # Evidence: MZK6869 (ירושלים) submitted q264=301300050020208 and left q135/q136 blank.
+    # YAML: q264 verified exclusively for Jerusalem; q135/q137 verified for Cholon/Tel Aviv.
+    ConditionalRule(
+        note       = "ירושלים: ארנונה — מספר זיהוי נכס בלבד (מספר נכס ומספר לקוח מוסתרים)",
+        logic      = "all",
+        conditions = [
+            Condition(field="שירותים_נבחרים", section="basic", operator=Op.CONTAINS, value="ארנונה"),
+            Condition(field="עיר",            section="basic", operator=Op.EQUALS,   value="ירושלים"),
+        ],
+        action  = "hide",
+        targets = ["מספר_נכס", "מספר_לקוח"],
+    ),
+
+    # Rule 8 — Cholon arnona uses מספר_נכס + מספר_לקוח only (not מספר_זיהוי_נכס)
+    # Evidence: Cholon submission provided q135+q136 and left q264 blank.
+    # YAML: q135/q136 verified for Cholon; q264 verified for Jerusalem only.
+    ConditionalRule(
+        note       = "חולון: ארנונה — מספר נכס ומספר לקוח בלבד (מספר זיהוי נכס מוסתר)",
+        logic      = "all",
+        conditions = [
+            Condition(field="שירותים_נבחרים", section="basic", operator=Op.CONTAINS, value="ארנונה"),
+            Condition(field="עיר",            section="basic", operator=Op.EQUALS,   value="חולון"),
+        ],
+        action  = "hide",
+        targets = ["מספר_זיהוי_נכס"],
+    ),
 ]
 
 # Singleton engine instance — used by the arnona service
