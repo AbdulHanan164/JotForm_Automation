@@ -77,7 +77,12 @@ class ArnonaService(BaseService):
             cleaned = self._coerce(value, ftype)
 
             if section in parsed:
-                parsed[section][label] = cleaned
+                # Non-empty value always wins; empty value only fills an unset label.
+                # Two fields can share the same label (different flow paths, e.g.
+                # q104 for "מתחיל שכירות" and q214 for "בעל בית" both map to
+                # partner[שם_פרטי]). The one that arrives with a real value wins.
+                if cleaned or label not in parsed[section]:
+                    parsed[section][label] = cleaned
 
         # Apply auto-fills from conditional logic
         autofills = arnona_logic_engine.get_autofills(parsed)
