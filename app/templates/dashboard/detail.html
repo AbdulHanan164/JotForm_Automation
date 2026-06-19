@@ -7,6 +7,7 @@
 {% if msg %}<div class="flash flash-ok">{{ t.flash[msg] if msg in t.flash else msg }}</div>{% endif %}
 {% if err %}<div class="flash flash-err">{{ t.flash[err] if err in t.flash else err }}</div>{% endif %}
 
+{# ── Header ── #}
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
     <h1 style="margin:0">{{ item.customer_name or "—" }}
@@ -14,27 +15,81 @@
     </h1>
     <span class="badge {{ status_meta[item.status].cls }}">{{ t.status[item.status] }}</span>
   </div>
-  <div class="muted" style="margin-top:6px">{{ item.services or "—" }} · {{ t.th_received }} {{ (item.received_at or "")[:16].replace("T"," ") }}</div>
+  <div class="muted" style="margin-top:6px">{{ item.services or "—" }} · {{ t.th_received }} {{ item.received_at[:10].split("-") | reverse | join("-") if item.received_at else "—" }}</div>
 </div>
 
+{# ── Request type ── #}
+<div class="card">
+  <h2>{{ t.sec_request }}</h2>
+  <div class="kv"><span class="k">{{ t.lbl_req_type }}</span><span class="v" style="font-weight:600">{{ txn_label }}</span></div>
+  <div class="kv"><span class="k">{{ t.lbl_services }}</span><span class="v">{{ sub.transfer_to or item.services or "—" }}</span></div>
+</div>
+
+{# ── All parties ── #}
+{% set has_outgoing = outgoing and outgoing.full_name %}
+{% set has_partner  = partner  and partner.full_name  %}
+{% set has_landlord = landlord and landlord.full_name %}
+
 <div class="grid2">
+  {# Incoming tenant — always shown #}
   <div class="card">
-    <h2>{{ t.sec_customer }}</h2>
+    <h2>{{ t.role_incoming }}</h2>
     <div class="kv"><span class="k">{{ t.lbl_fullname }}</span><span class="v">{{ incoming.full_name or item.customer_name or "—" }}</span></div>
-    <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ incoming.phone or item.customer_phone or "—" }}</span></div>
-    <div class="kv"><span class="k">{{ t.lbl_email }}</span><span class="v">{{ incoming.email or item.customer_email or "—" }}</span></div>
     <div class="kv"><span class="k">{{ t.lbl_id }}</span><span class="v">{{ incoming.id_number or "—" }}</span></div>
+    <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ incoming.phone or item.customer_phone or "—" }}</span></div>
+    {% if incoming.email %}<div class="kv"><span class="k">{{ t.lbl_email }}</span><span class="v">{{ incoming.email }}</span></div>{% endif %}
   </div>
 
+  {# Outgoing tenant — only when present #}
+  {% if has_outgoing %}
+  <div class="card">
+    <h2>{{ t.role_outgoing }}</h2>
+    <div class="kv"><span class="k">{{ t.lbl_fullname }}</span><span class="v">{{ outgoing.full_name }}</span></div>
+    <div class="kv"><span class="k">{{ t.lbl_id }}</span><span class="v">{{ outgoing.id_number or "—" }}</span></div>
+    <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ outgoing.phone or "—" }}</span></div>
+    {% if outgoing.email %}<div class="kv"><span class="k">{{ t.lbl_email }}</span><span class="v">{{ outgoing.email }}</span></div>{% endif %}
+  </div>
+  {% endif %}
+
+  {# Partner / second tenant — only when present #}
+  {% if has_partner %}
+  <div class="card">
+    <h2>{{ t.role_partner }}</h2>
+    <div class="kv"><span class="k">{{ t.lbl_fullname }}</span><span class="v">{{ partner.full_name }}</span></div>
+    <div class="kv"><span class="k">{{ t.lbl_id }}</span><span class="v">{{ partner.id_number or "—" }}</span></div>
+    <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ partner.phone or "—" }}</span></div>
+    {% if partner.email %}<div class="kv"><span class="k">{{ t.lbl_email }}</span><span class="v">{{ partner.email }}</span></div>{% endif %}
+  </div>
+  {% endif %}
+
+  {# Landlord — only when present #}
+  {% if has_landlord %}
+  <div class="card">
+    <h2>{{ t.role_landlord }}</h2>
+    <div class="kv"><span class="k">{{ t.lbl_fullname }}</span><span class="v">{{ landlord.full_name }}</span></div>
+    <div class="kv"><span class="k">{{ t.lbl_id }}</span><span class="v">{{ landlord.id_number or "—" }}</span></div>
+    <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ landlord.phone or "—" }}</span></div>
+    {% if landlord.email %}<div class="kv"><span class="k">{{ t.lbl_email }}</span><span class="v">{{ landlord.email }}</span></div>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{# ── Property + dates ── #}
+<div class="grid2">
   <div class="card">
     <h2>{{ t.sec_property }}</h2>
     <div class="kv"><span class="k">{{ t.lbl_address }}</span><span class="v">{{ property.full_address or item.property_address or "—" }}</span></div>
     <div class="kv"><span class="k">{{ t.lbl_city }}</span><span class="v">{{ property.city or "—" }}</span></div>
-    <div class="kv"><span class="k">{{ t.lbl_movein }}</span><span class="v">{{ dates.move_in or "—" }}</span></div>
-    <div class="kv"><span class="k">{{ t.lbl_leaseend }}</span><span class="v">{{ dates.lease_end or "—" }}</span></div>
+  </div>
+  <div class="card">
+    <h2>{{ t.th_received }}</h2>
+    {% if dates.move_in  %}<div class="kv"><span class="k">{{ t.lbl_movein  }}</span><span class="v">{{ dates.move_in  }}</span></div>{% endif %}
+    {% if dates.move_out %}<div class="kv"><span class="k">{{ t.lbl_moveout }}</span><span class="v">{{ dates.move_out }}</span></div>{% endif %}
+    {% if dates.lease_end%}<div class="kv"><span class="k">{{ t.lbl_leaseend}}</span><span class="v">{{ dates.lease_end}}</span></div>{% endif %}
   </div>
 </div>
 
+{# ── Missing info + docs ── #}
 <div class="grid2">
   <div class="card">
     <h2>{{ t.sec_missing_info }} ({{ missing_info|length }})</h2>

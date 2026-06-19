@@ -25,7 +25,7 @@
     <thead>
       <tr>
         <th>{{ t.th_mzk }}</th><th>{{ t.th_customer }}</th><th>{{ t.th_phone }}</th><th>{{ t.th_address }}</th>
-        <th>{{ t.th_service }}</th><th>{{ t.th_missing }}</th><th>{{ t.th_status }}</th><th>{{ t.th_received }}</th>
+        <th>{{ t.th_type }}</th><th>{{ t.th_service }}</th><th>{{ t.th_missing }}</th><th>{{ t.th_status }}</th><th>{{ t.th_received }}</th>
       </tr>
     </thead>
     <tbody>
@@ -35,6 +35,7 @@
         <td>{{ r.customer }}{% if r.has_errors %} <span title="errors">⚠️</span>{% endif %}</td>
         <td class="muted">{{ r.phone }}</td>
         <td class="muted">{{ r.address }}</td>
+        <td>{{ r.request_type }}</td>
         <td>{{ r.service }}</td>
         <td class="muted">{{ r.missing_info }} {{ t.info_word }} · {{ r.missing_docs }} {{ t.docs_word }}</td>
         <td><span class="badge {{ status_meta[r.status].cls }}">{{ t.status[r.status] }}</span></td>

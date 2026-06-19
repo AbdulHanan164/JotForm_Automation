@@ -73,12 +73,17 @@ _T: dict[str, dict] = {
         "search_ph": "חיפוש: שם לקוח, MZK, כתובת, טלפון, מספר הגשה…",
         "search_btn": "חיפוש", "clear_btn": "נקה",
         "th_mzk": "MZK", "th_customer": "לקוח", "th_phone": "טלפון", "th_address": "כתובת",
-        "th_service": "שירות", "th_missing": "חסר", "th_status": "סטטוס", "th_received": "התקבל",
+        "th_type": "סוג בקשה", "th_service": "שירות", "th_missing": "חסר",
+        "th_status": "סטטוס", "th_received": "התקבל",
         "info_word": "מידע", "docs_word": "מסמכים", "no_rows": "אין פניות התואמות את הסינון.",
-        "back": "← חזרה לרשימה", "sec_customer": "פרטי לקוח",
+        "back": "← חזרה לרשימה",
+        "sec_request": "פרטי בקשה", "lbl_req_type": "סוג בקשה", "lbl_services": "שירותים",
+        "sec_customer": "פרטי לקוח",
         "lbl_fullname": "שם מלא", "lbl_phone": "טלפון", "lbl_email": "אימייל", "lbl_id": "תעודת זהות",
+        "role_incoming": "דייר נכנס", "role_outgoing": "דייר יוצא",
+        "role_partner": "שוכר שני", "role_landlord": "בעל הבית",
         "sec_property": "פרטי נכס", "lbl_address": "כתובת", "lbl_city": "עיר",
-        "lbl_movein": "תאריך כניסה", "lbl_leaseend": "סיום חוזה",
+        "lbl_movein": "תאריך כניסה", "lbl_moveout": "תאריך יציאה", "lbl_leaseend": "סיום חוזה",
         "sec_missing_info": "מידע חסר", "none_missing_info": "אין מידע חסר.",
         "sec_missing_docs": "מסמכים חסרים", "none_missing_docs": "אין מסמכים חסרים.",
         "sec_validation": "בדיקות עקביות", "sec_documents": "מסמכים שהורדו",
@@ -94,6 +99,12 @@ _T: dict[str, dict] = {
         "confirm_reject": "לדחות את הפנייה?",
         "status": {"pending_review": "ממתין לבדיקה", "needs_info": "נדרש מידע",
                    "approved": "אושר", "rejected": "נדחה", "sent": "נשלח"},
+        "txn_type": {
+            "rental_transfer": "שכירות — כניסה",
+            "sale_transfer":   "קנייה / מכירה",
+            "owner_transfer":  "העברה לבעל הנכס",
+            "account_closure": "גמר חשבון",
+        },
         "flash": {"approved": "הפנייה אושרה. שלח את המייל ללקוח באופן ידני.",
                   "rejected": "הפנייה נדחתה.", "needs_info": "הפנייה סומנה כ'נדרש מידע'.",
                   "already_handled": "הפנייה כבר טופלה.",
@@ -110,12 +121,17 @@ _T: dict[str, dict] = {
         "search_ph": "Search: customer, MZK, address, phone, submission id…",
         "search_btn": "Search", "clear_btn": "Clear",
         "th_mzk": "MZK", "th_customer": "Customer", "th_phone": "Phone", "th_address": "Address",
-        "th_service": "Service", "th_missing": "Missing", "th_status": "Status", "th_received": "Received",
+        "th_type": "Request type", "th_service": "Service", "th_missing": "Missing",
+        "th_status": "Status", "th_received": "Received",
         "info_word": "info", "docs_word": "docs", "no_rows": "No submissions match the filter.",
-        "back": "← Back to list", "sec_customer": "Customer details",
+        "back": "← Back to list",
+        "sec_request": "Request details", "lbl_req_type": "Request type", "lbl_services": "Services",
+        "sec_customer": "Customer details",
         "lbl_fullname": "Full name", "lbl_phone": "Phone", "lbl_email": "Email", "lbl_id": "ID number",
+        "role_incoming": "Incoming Tenant", "role_outgoing": "Outgoing Tenant",
+        "role_partner": "Second Tenant", "role_landlord": "Landlord",
         "sec_property": "Property details", "lbl_address": "Address", "lbl_city": "City",
-        "lbl_movein": "Move-in date", "lbl_leaseend": "Lease end",
+        "lbl_movein": "Move-in date", "lbl_moveout": "Move-out date", "lbl_leaseend": "Lease end",
         "sec_missing_info": "Missing information", "none_missing_info": "No missing information.",
         "sec_missing_docs": "Missing documents", "none_missing_docs": "No missing documents.",
         "sec_validation": "Consistency checks", "sec_documents": "Downloaded documents",
@@ -131,6 +147,12 @@ _T: dict[str, dict] = {
         "confirm_reject": "Reject this submission?",
         "status": {"pending_review": "Pending review", "needs_info": "Needs info",
                    "approved": "Approved", "rejected": "Rejected", "sent": "Sent"},
+        "txn_type": {
+            "rental_transfer": "Rental — Move In",
+            "sale_transfer":   "Sale / Purchase",
+            "owner_transfer":  "Transfer to Owner",
+            "account_closure": "Account Closure",
+        },
         "flash": {"approved": "Submission approved. Send the email to the customer manually.",
                   "rejected": "Submission rejected.", "needs_info": "Submission flagged as 'needs info'.",
                   "already_handled": "Submission already handled.",
@@ -138,6 +160,19 @@ _T: dict[str, dict] = {
                   "need_reason": "A rejection reason is required.", "need_notes": "A note is required."},
     },
 }
+
+
+def _fmt_date(iso: str) -> str:
+    """Convert ISO date string (YYYY-MM-DD...) to DD-MM-YYYY for display."""
+    d = (iso or "")[:10]
+    if len(d) == 10 and d[4] == "-" and d[7] == "-":
+        return f"{d[8:10]}-{d[5:7]}-{d[:4]}"
+    return d
+
+
+def _txn_label(code: str, lang: str) -> str:
+    """Human-readable transaction type label in the current language."""
+    return _T[lang].get("txn_type", {}).get(code, code)
 
 
 def _i18n(request: Request) -> dict:
@@ -250,19 +285,30 @@ def dashboard_home(request: Request, status: str = "all", q: str = ""):
             return ql in hay
         items = [it for it in items if _match(it)]
 
-    rows = [{
-        "submission_id": it.submission_id,
-        "mzk_ref":       it.mzk_ref or "—",
-        "received_at":   (it.received_at or "")[:16].replace("T", " "),
-        "customer":      it.customer_name or "—",
-        "phone":         it.customer_phone or "",
-        "address":       it.property_address or "—",
-        "service":       it.services or "—",
-        "status":        it.status.value,
-        "missing_info":  len(it.missing_info),
-        "missing_docs":  len(it.missing_docs),
-        "has_errors":    it.has_errors,
-    } for it in items]
+    lang = request.cookies.get(_LANG_COOKIE, "he")
+    if lang not in ("he", "en"):
+        lang = "he"
+
+    rows = []
+    for it in items:
+        bd  = it.business_data or {}
+        sub = bd.get("submission") or {}
+        txn = sub.get("transaction_type", "")
+        services = sub.get("transfer_to") or it.services or "—"
+        rows.append({
+            "submission_id": it.submission_id,
+            "mzk_ref":       it.mzk_ref or "—",
+            "received_at":   _fmt_date(it.received_at or ""),
+            "customer":      it.customer_name or "—",
+            "phone":         it.customer_phone or "",
+            "address":       it.property_address or "—",
+            "request_type":  _txn_label(txn, lang) if txn else "—",
+            "service":       services,
+            "status":        it.status.value,
+            "missing_info":  len(it.missing_info),
+            "missing_docs":  len(it.missing_docs),
+            "has_errors":    it.has_errors,
+        })
 
     return _TEMPLATES.TemplateResponse(request, "dashboard/list.html", {
         **_i18n(request),
@@ -282,19 +328,33 @@ def review_detail(request: Request, submission_id: str, msg: str = "", err: str 
     if item is None:
         raise HTTPException(status_code=404, detail="הפנייה לא נמצאה")
 
-    bd = item.business_data or {}
+    bd       = item.business_data or {}
     incoming = bd.get("incoming_tenant") or {}
+    outgoing = bd.get("outgoing_tenant") or {}
+    partner  = bd.get("partner") or {}
+    landlord = bd.get("landlord") or {}
     prop     = bd.get("property") or {}
     dates    = bd.get("dates") or {}
+    sub      = bd.get("submission") or {}
+
+    i18n_ctx = _i18n(request)
+    lang     = i18n_ctx["lang"]
+    txn_code = sub.get("transaction_type", "")
+    txn_label = _txn_label(txn_code, lang) if txn_code else "—"
 
     documents = _list_documents(submission_id)
 
     return _TEMPLATES.TemplateResponse(request, "dashboard/detail.html", {
-        **_i18n(request),
+        **i18n_ctx,
         "item":         item.to_dict(),
         "incoming":     incoming,
+        "outgoing":     outgoing,
+        "partner":      partner,
+        "landlord":     landlord,
         "property":     prop,
         "dates":        dates,
+        "sub":          sub,
+        "txn_label":    txn_label,
         "missing_info": item.missing_info or [],
         "missing_docs": item.missing_docs or [],
         "validation":   item.validation_issues or [],
