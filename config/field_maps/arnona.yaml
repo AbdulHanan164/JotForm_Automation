@@ -76,6 +76,18 @@ fields:
     type: select
     verified: true                     # "אדם פרטי"
 
+  - jotform_id: "q7_input7"
+    label: "סוג_משכיר"
+    section: basic
+    type: text
+    verified: true                     # "משכיר" — sub-role for landlord/owner flow (MZK6869)
+
+  - jotform_id: "q209_input209"
+    label: "שותפים"
+    section: basic
+    type: text
+    verified: true                     # "שותפים" — second-tenant flag (MZK6869 _unmapped)
+
   - jotform_id: "q10_input10"
     label: "סוג_תשלום"
     section: basic
@@ -140,36 +152,60 @@ fields:
     type: id_num
     verified: true                     # "028721819"
 
-  # ── Partner / Second Tenant — production IDs not yet observed ─────────────
-  - jotform_id: "q104_input104"        # PLACEHOLDER
+  # ── Partner / Second Tenant ───────────────────────────────────────────────
+  # Two form flows produce partner data under different field IDs:
+  #   Flow 1 "מתחיל שכירות": q104 (first), q235 (last), q102 (ID)
+  #   Flow 2 "בעל בית":      q214 (first), q231 (last), q212 (ID), q213 (phone)
+  # Both sets map to the same section labels; whichever is present in the
+  # payload wins (the other is absent from the webhook and cannot overwrite).
+
+  - jotform_id: "q104_input104"
     label: "שם_פרטי"
     section: partner
     type: text
-    verified: false
+    verified: true                     # "דניאל" in MZK6870 (מתחיל שכירות partner)
 
-  - jotform_id: "q235_input235"        # PLACEHOLDER
+  - jotform_id: "q214_input214"
+    label: "שם_פרטי"
+    section: partner
+    type: text
+    verified: true                     # "ליאור שמעון" in MZK6869 (בעל בית partner)
+
+  - jotform_id: "q235_input235"
     label: "שם_משפחה"
     section: partner
     type: text
-    verified: false
+    verified: true                     # "ברנס" in MZK6870 (מתחיל שכירות partner)
 
-  - jotform_id: "q103_input103"        # PLACEHOLDER
+  - jotform_id: "q231_22231"
+    label: "שם_משפחה"
+    section: partner
+    type: text
+    verified: true                     # "דנינו" in MZK6869 (בעל בית partner)
+
+  - jotform_id: "q213_input213"
     label: "טלפון"
     section: partner
     type: phone
-    verified: false
+    verified: true                     # 0524043365 in MZK6869 (בעל בית partner)
 
-  - jotform_id: "q105_email105"        # PLACEHOLDER
+  - jotform_id: "q105_email105"        # PLACEHOLDER — production ID not yet observed
     label: "אימייל"
     section: partner
     type: email
     verified: false
 
-  - jotform_id: "q106_idNumber106"     # PLACEHOLDER
+  - jotform_id: "q102_input102"
     label: "תעודת_זהות"
     section: partner
     type: id_num
-    verified: false
+    verified: true                     # 322272881 in MZK6870 (מתחיל שכירות partner)
+
+  - jotform_id: "q212_22212"
+    label: "תעודת_זהות"
+    section: partner
+    type: id_num
+    verified: true                     # 304895121 in MZK6869 (בעל בית partner)
 
   # ── Outgoing Tenant ────────────────────────────────────────────────────────
   - jotform_id: "q94_input94"
@@ -265,25 +301,33 @@ fields:
     verified: false
 
   # ── Arnona Account Numbers ─────────────────────────────────────────────────
-  # v0.3 carried these in "property" (asset_number / customer_number);
-  # mapped here to the arnona section the current pipeline expects.
+  # Multiple field IDs for the same label — different cities use different fields.
+  # q135/q136 verified for Cholon; q137 verified for Tel Aviv (MZK6870).
+  # q264 verified for Jerusalem long property ID (MZK6869).
+  # Whichever is present in the payload is captured; absent ones do not overwrite.
   - jotform_id: "q135_input135"
     label: "מספר_נכס"
     section: arnona
     type: text
-    verified: true                     # empty for new registrations — real ID
+    verified: true                     # Cholon — empty for new registrations; real ID confirmed
+
+  - jotform_id: "q137_input137"
+    label: "מספר_נכס"
+    section: arnona
+    type: text
+    verified: true                     # 11474513 in MZK6870 (Tel Aviv) — was in _unmapped
 
   - jotform_id: "q136_input136"
     label: "מספר_לקוח"
     section: arnona
     type: text
-    verified: true
+    verified: true                     # Cholon — real ID confirmed
 
-  - jotform_id: "q62_arnonaId62"       # PLACEHOLDER
+  - jotform_id: "q264_input264"
     label: "מספר_זיהוי_נכס"
     section: arnona
     type: text
-    verified: false
+    verified: true                     # 301300050020208 in MZK6869 (Jerusalem) — was in _unmapped
 
   - jotform_id: "q63_arnonaTenant63"   # PLACEHOLDER (Ramat Gan specific)
     label: "מספר_חשבון_תושב"
@@ -297,18 +341,18 @@ fields:
     type: text
     verified: false
 
-  # ── Water Account Numbers — production IDs not yet observed ───────────────
-  - jotform_id: "q70_waterProperty70"  # PLACEHOLDER
+  # ── Water Account Numbers ─────────────────────────────────────────────────
+  - jotform_id: "q70_waterProperty70"  # PLACEHOLDER — production ID not yet observed
     label: "מספר_נכס"
     section: water
     type: text
     verified: false
 
-  - jotform_id: "q71_waterCust71"      # PLACEHOLDER
+  - jotform_id: "q528_input528"
     label: "מספר_לקוח"
     section: water
     type: text
-    verified: false
+    verified: true                     # 1310696 in MZK6869 — was in _unmapped
 
   # ── Documents / File Uploads ───────────────────────────────────────────────
   # NOTE: presence semantics follow v0.3 — a value counts as present only if
@@ -417,12 +461,6 @@ fields:
     section: system
     type: text
     verified: true                     # "אבנר שבו- צבי תדמור 8 דירה 42,חולון - IN"
-
-  - jotform_id: "q102_dealType102"     # PLACEHOLDER
-    label: "סוג_עסקה"
-    section: system
-    type: text
-    verified: false
 
   # ── FHS Normalized Fields ──────────────────────────────────────────────────
   # LABEL NAMING: labels must match exactly what business_mapper.py expects
