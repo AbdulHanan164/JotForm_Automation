@@ -1,22 +1,22 @@
 {% extends "dashboard/base.html" %}
-{% block title %}פניות{% endblock %}
+{% block title %}{{ t.nav_submissions }}{% endblock %}
 {% block content %}
-<h1>פניות לבדיקה</h1>
+<h1>{{ t.list_title }}</h1>
 
 <div class="tabs">
-  {% for key, label in tabs %}
+  {% for key in tabs %}
     <a class="tab {% if key == active %}active{% endif %}"
        href="/dashboard?status={{ key }}{% if q %}&q={{ q }}{% endif %}">
-      {{ label }}<span class="n">{{ counts.get(key, 0) }}</span>
+      {{ t.tab_all if key == 'all' else t.status[key] }}<span class="n">{{ counts.get(key, 0) }}</span>
     </a>
   {% endfor %}
 </div>
 
 <form class="search" method="get" action="/dashboard">
   <input type="hidden" name="status" value="{{ active }}">
-  <input type="text" name="q" value="{{ q }}" placeholder="חיפוש: שם לקוח, MZK, כתובת, טלפון, מספר הגשה…">
-  <button class="btn btn-primary" type="submit">חיפוש</button>
-  {% if q %}<a class="btn btn-ghost" href="/dashboard?status={{ active }}">נקה</a>{% endif %}
+  <input type="text" name="q" value="{{ q }}" placeholder="{{ t.search_ph }}">
+  <button class="btn btn-primary" type="submit">{{ t.search_btn }}</button>
+  {% if q %}<a class="btn btn-ghost" href="/dashboard?status={{ active }}">{{ t.clear_btn }}</a>{% endif %}
 </form>
 
 <div class="card">
@@ -24,27 +24,27 @@
   <table>
     <thead>
       <tr>
-        <th>MZK</th><th>לקוח</th><th>טלפון</th><th>כתובת</th>
-        <th>שירות</th><th>חסר</th><th>סטטוס</th><th>התקבל</th>
+        <th>{{ t.th_mzk }}</th><th>{{ t.th_customer }}</th><th>{{ t.th_phone }}</th><th>{{ t.th_address }}</th>
+        <th>{{ t.th_service }}</th><th>{{ t.th_missing }}</th><th>{{ t.th_status }}</th><th>{{ t.th_received }}</th>
       </tr>
     </thead>
     <tbody>
       {% for r in rows %}
       <tr onclick="location.href='/dashboard/review/{{ r.submission_id }}'" style="cursor:pointer">
         <td><a href="/dashboard/review/{{ r.submission_id }}">{{ r.mzk_ref }}</a></td>
-        <td>{{ r.customer }}{% if r.has_errors %} <span title="שגיאות עקביות">⚠️</span>{% endif %}</td>
+        <td>{{ r.customer }}{% if r.has_errors %} <span title="errors">⚠️</span>{% endif %}</td>
         <td class="muted">{{ r.phone }}</td>
         <td class="muted">{{ r.address }}</td>
         <td>{{ r.service }}</td>
-        <td class="muted">{{ r.missing_info }} מידע · {{ r.missing_docs }} מסמכים</td>
-        <td><span class="badge {{ status_meta[r.status].cls }}">{{ status_meta[r.status].label }}</span></td>
+        <td class="muted">{{ r.missing_info }} {{ t.info_word }} · {{ r.missing_docs }} {{ t.docs_word }}</td>
+        <td><span class="badge {{ status_meta[r.status].cls }}">{{ t.status[r.status] }}</span></td>
         <td class="muted">{{ r.received_at }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% else %}
-  <p class="muted">אין פניות התואמות את הסינון.</p>
+  <p class="muted">{{ t.no_rows }}</p>
   {% endif %}
 </div>
 {% endblock %}

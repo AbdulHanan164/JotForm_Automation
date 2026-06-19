@@ -122,3 +122,36 @@ class TestDashboardActions:
     def test_document_404_when_absent(self, auth_client, tmp_dirs):
         auth_client.cookies.set("dash_key", KEY)
         assert auth_client.get("/dashboard/documents/nope/x.png").status_code == 404
+
+
+class TestDashboardLanguage:
+    def test_default_is_hebrew_rtl(self, auth_client, tmp_dirs):
+        auth_client.cookies.set("dash_key", KEY)
+        r = auth_client.get("/dashboard")
+        assert 'dir="rtl"' in r.text
+        assert "פניות לבדיקה" in r.text
+
+    def test_lang_switch_sets_cookie(self, auth_client):
+        r = auth_client.get("/dashboard/lang/en", follow_redirects=False)
+        assert r.status_code == 303
+        assert "dash_lang=en" in r.headers.get("set-cookie", "")
+
+    def test_english_list_renders_ltr(self, auth_client, tmp_dirs):
+        _seed("dash-en-1")
+        auth_client.cookies.set("dash_key", KEY)
+        auth_client.cookies.set("dash_lang", "en")
+        r = auth_client.get("/dashboard")
+        assert 'dir="ltr"' in r.text
+        assert "Submissions for review" in r.text
+        assert "Pending review" in r.text  # translated status badge
+
+    def test_english_detail_renders(self, auth_client, tmp_dirs):
+        sid = _seed("dash-en-2")
+        auth_client.cookies.set("dash_key", KEY)
+        auth_client.cookies.set("dash_lang", "en")
+        r = auth_client.get(f"/dashboard/review/{sid}")
+        assert "Customer details" in r.text
+        assert "Property details" in r.text
+        assert "Approve" in r.text
+        # real submission data stays in Hebrew
+        assert "אריק שמש" in r.text

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="he">
+<html dir="{{ dir|default('rtl') }}" lang="{{ lang|default('he') }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}לוח בקרה{% endblock %} · מה זה קל</title>
+  <title>{% block title %}Dashboard{% endblock %} · {{ t.brand if t else 'מה זה קל' }}</title>
   <style>
     :root{
       --bg:#f4f6fa; --card:#fff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb;
@@ -26,7 +26,7 @@
     h1{font-size:22px;margin:0 0 14px}
     h2{font-size:16px;margin:0 0 12px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
     table{width:100%;border-collapse:collapse}
-    th,td{text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+    th,td{text-align:start;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
     th{background:#f8fafc;color:var(--muted);font-weight:600;font-size:13px}
     tr:hover td{background:#fafbff}
     .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
@@ -73,8 +73,12 @@
 </head>
 <body>
   <div class="topbar">
-    <div class="logo">מה זה קל · לוח בקרה למפעיל</div>
-    <div><a href="/dashboard">פניות</a> &nbsp;|&nbsp; <a href="/dashboard/logout">התנתקות</a></div>
+    <div class="logo">{{ t.brand }}</div>
+    <div>
+      <a href="/dashboard">{{ t.nav_submissions }}</a> &nbsp;|&nbsp;
+      <a href="/dashboard/lang/{{ 'en' if lang == 'he' else 'he' }}">🌐 {{ t.toggle }}</a> &nbsp;|&nbsp;
+      <a href="/dashboard/logout">{{ t.logout }}</a>
+    </div>
   </div>
   <div class="wrap">
     {% block content %}{% endblock %}
