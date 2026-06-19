@@ -31,6 +31,7 @@ from app.logger import setup_logger
 from app.routes.webhook import router as webhook_router
 from app.routes.review  import router as review_router
 from app.routes.admin   import router as admin_router
+from app.routes.dashboard import router as dashboard_router
 
 # Type alias for the auth dependency (used in routes defined in main.py)
 _Auth = Annotated[str, Depends(require_operator)]
@@ -125,6 +126,7 @@ app.add_middleware(
 app.include_router(webhook_router)
 app.include_router(review_router)
 app.include_router(admin_router)
+app.include_router(dashboard_router)
 
 
 # ── Health (public — intentionally no auth) ───────────────────────────────────

@@ -1,0 +1,15 @@
+{% extends "dashboard/base.html" %}
+{% block title %}כניסה{% endblock %}
+{% block content %}
+<div class="card" style="max-width:420px;margin:60px auto">
+  <h1>כניסת מפעיל</h1>
+  {% if error %}<div class="flash flash-err">{{ error }}</div>{% endif %}
+  <p class="muted">הזן את מפתח המפעיל (OPERATOR_API_KEY) כדי להיכנס.</p>
+  <form method="post" action="/dashboard/login">
+    <input type="password" name="api_key" placeholder="מפתח מפעיל"
+           autofocus required
+           style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;margin-bottom:12px">
+    <button class="btn btn-primary" type="submit" style="width:100%">כניסה</button>
+  </form>
+</div>
+{% endblock %}

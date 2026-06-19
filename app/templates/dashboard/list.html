@@ -1,0 +1,50 @@
+{% extends "dashboard/base.html" %}
+{% block title %}פניות{% endblock %}
+{% block content %}
+<h1>פניות לבדיקה</h1>
+
+<div class="tabs">
+  {% for key, label in tabs %}
+    <a class="tab {% if key == active %}active{% endif %}"
+       href="/dashboard?status={{ key }}{% if q %}&q={{ q }}{% endif %}">
+      {{ label }}<span class="n">{{ counts.get(key, 0) }}</span>
+    </a>
+  {% endfor %}
+</div>
+
+<form class="search" method="get" action="/dashboard">
+  <input type="hidden" name="status" value="{{ active }}">
+  <input type="text" name="q" value="{{ q }}" placeholder="חיפוש: שם לקוח, MZK, כתובת, טלפון, מספר הגשה…">
+  <button class="btn btn-primary" type="submit">חיפוש</button>
+  {% if q %}<a class="btn btn-ghost" href="/dashboard?status={{ active }}">נקה</a>{% endif %}
+</form>
+
+<div class="card">
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>MZK</th><th>לקוח</th><th>טלפון</th><th>כתובת</th>
+        <th>שירות</th><th>חסר</th><th>סטטוס</th><th>התקבל</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr onclick="location.href='/dashboard/review/{{ r.submission_id }}'" style="cursor:pointer">
+        <td><a href="/dashboard/review/{{ r.submission_id }}">{{ r.mzk_ref }}</a></td>
+        <td>{{ r.customer }}{% if r.has_errors %} <span title="שגיאות עקביות">⚠️</span>{% endif %}</td>
+        <td class="muted">{{ r.phone }}</td>
+        <td class="muted">{{ r.address }}</td>
+        <td>{{ r.service }}</td>
+        <td class="muted">{{ r.missing_info }} מידע · {{ r.missing_docs }} מסמכים</td>
+        <td><span class="badge {{ status_meta[r.status].cls }}">{{ status_meta[r.status].label }}</span></td>
+        <td class="muted">{{ r.received_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">אין פניות התואמות את הסינון.</p>
+  {% endif %}
+</div>
+{% endblock %}

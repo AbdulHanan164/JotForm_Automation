@@ -5,6 +5,7 @@ uvicorn[standard]==0.41.0
 python-multipart==0.0.22
 pydantic-settings==2.13.1
 pyyaml==6.0.3
+jinja2==3.1.6                 # operator dashboard templates (/dashboard)
 
 # ── Optional integrations (uncomment when ready) ──────────────────────────────
 

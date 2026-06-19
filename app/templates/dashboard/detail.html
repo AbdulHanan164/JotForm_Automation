@@ -1,0 +1,131 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{{ item.mzk_ref or item.submission_id }}{% endblock %}
+{% block content %}
+
+<a class="back" href="/dashboard">← חזרה לרשימה</a>
+
+{% if msg %}<div class="flash flash-ok">{{ msg }}</div>{% endif %}
+{% if err %}<div class="flash flash-err">{{ err }}</div>{% endif %}
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <h1 style="margin:0">{{ item.customer_name or "—" }}
+      <span class="muted" style="font-size:15px">· {{ item.mzk_ref or item.submission_id }}</span>
+    </h1>
+    <span class="badge {{ status_meta[item.status].cls }}">{{ status_meta[item.status].label }}</span>
+  </div>
+  <div class="muted" style="margin-top:6px">{{ item.services or "—" }} · התקבל {{ (item.received_at or "")[:16].replace("T"," ") }}</div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>פרטי לקוח</h2>
+    <div class="kv"><span class="k">שם מלא</span><span class="v">{{ incoming.full_name or item.customer_name or "—" }}</span></div>
+    <div class="kv"><span class="k">טלפון</span><span class="v">{{ incoming.phone or item.customer_phone or "—" }}</span></div>
+    <div class="kv"><span class="k">אימייל</span><span class="v">{{ incoming.email or item.customer_email or "—" }}</span></div>
+    <div class="kv"><span class="k">תעודת זהות</span><span class="v">{{ incoming.id_number or "—" }}</span></div>
+  </div>
+
+  <div class="card">
+    <h2>פרטי נכס</h2>
+    <div class="kv"><span class="k">כתובת</span><span class="v">{{ property.full_address or item.property_address or "—" }}</span></div>
+    <div class="kv"><span class="k">עיר</span><span class="v">{{ property.city or "—" }}</span></div>
+    <div class="kv"><span class="k">תאריך כניסה</span><span class="v">{{ dates.move_in or "—" }}</span></div>
+    <div class="kv"><span class="k">סיום חוזה</span><span class="v">{{ dates.lease_end or "—" }}</span></div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>מידע חסר ({{ missing_info|length }})</h2>
+    {% if missing_info %}
+      <ul class="pill-list">
+        {% for m in missing_info %}<li>{{ m.label }}{% if m.reason %} — <span class="muted">{{ m.reason }}</span>{% endif %}</li>{% endfor %}
+      </ul>
+    {% else %}<p class="muted">אין מידע חסר.</p>{% endif %}
+  </div>
+
+  <div class="card">
+    <h2>מסמכים חסרים ({{ missing_docs|length }})</h2>
+    {% if missing_docs %}
+      <ul class="pill-list docs">
+        {% for m in missing_docs %}<li>{{ m.label }}{% if m.reason %} — <span class="muted">{{ m.reason }}</span>{% endif %}</li>{% endfor %}
+      </ul>
+    {% else %}<p class="muted">אין מסמכים חסרים.</p>{% endif %}
+  </div>
+</div>
+
+{% if validation %}
+<div class="card">
+  <h2>בדיקות עקביות</h2>
+  <ul class="pill-list">
+    {% for v in validation %}
+      <li>{% if v.severity == "error" %}🛑{% elif v.severity == "warning" %}⚠️{% else %}ℹ️{% endif %}
+          {{ v.label or v.description }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>מסמכים שהורדו</h2>
+  {% if documents %}
+    <div class="docs-grid">
+      {% for d in documents %}
+        <div class="doc">
+          {% if d.is_image %}<a href="{{ d.url }}" target="_blank"><img src="{{ d.url }}" alt="{{ d.name }}"></a>
+          {% else %}<div style="font-size:40px;line-height:110px">📄</div>{% endif %}
+          <div class="name">{{ d.name }}</div>
+          <div class="muted" style="font-size:12px">{{ d.size_kb }} KB</div>
+          <a class="btn btn-ghost" style="padding:4px 10px;font-size:12px" href="{{ d.url }}" target="_blank" download>הורדה</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">לא הורדו מסמכים עבור הגשה זו.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>תצוגת מייל מוצע</h2>
+  {% if email %}
+    <div class="email-box">
+      <div class="email-subj">נושא: {{ email.subject }}</div>
+      <pre class="email-body">{{ email.body }}</pre>
+    </div>
+  {% else %}
+    <p class="muted">אין טיוטת מייל (ההגשה מלאה).</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>פעולות</h2>
+  {% if actionable %}
+    <form method="post" action="/dashboard/review/{{ item.submission_id }}/approve" class="actions"
+          onsubmit="return confirm('לאשר את הפנייה? המייל יישלח ידנית לאחר מכן.')">
+      {% if has_errors %}
+        <label style="width:100%;color:var(--rejected)">
+          <input type="checkbox" name="override_errors" value="1"> אשר למרות שגיאות עקביות
+        </label>
+        <input type="text" name="notes" placeholder="הסבר (חובה באישור עם שגיאות)" style="flex:1;min-width:200px;padding:8px;border:1px solid var(--line);border-radius:8px">
+      {% endif %}
+      <button class="btn btn-approve" type="submit">✓ אשר</button>
+    </form>
+
+    <form method="post" action="/dashboard/review/{{ item.submission_id }}/needs_info" class="actions" style="margin-top:10px">
+      <textarea name="notes" placeholder="מה חסר / נדרש מהלקוח?" required></textarea>
+      <button class="btn btn-info" type="submit">↻ נדרש מידע</button>
+    </form>
+
+    <form method="post" action="/dashboard/review/{{ item.submission_id }}/reject" class="actions" style="margin-top:10px"
+          onsubmit="return confirm('לדחות את הפנייה?')">
+      <textarea name="reason" placeholder="סיבת דחייה (חובה)" required></textarea>
+      <button class="btn btn-reject" type="submit">✕ דחה</button>
+    </form>
+  {% else %}
+    <p class="muted">הפנייה כבר טופלה (סטטוס: {{ status_meta[item.status].label }}). אין פעולות זמינות.</p>
+    {% if item.review_notes %}<div class="kv"><span class="k">הערות בדיקה</span><span class="v">{{ item.review_notes }}</span></div>{% endif %}
+  {% endif %}
+</div>
+
+{% endblock %}

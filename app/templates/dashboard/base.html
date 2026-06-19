@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}לוח בקרה{% endblock %} · מה זה קל</title>
+  <style>
+    :root{
+      --bg:#f4f6fa; --card:#fff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb;
+      --brand:#1e4d8c; --brand-d:#163a6b;
+      --pending:#b45309; --pending-bg:#fef3c7;
+      --info:#1d4ed8;    --info-bg:#dbeafe;
+      --approved:#207020;--approved-bg:#dcfce7;
+      --rejected:#b91c1c;--rejected-bg:#fee2e2;
+      --sent:#0f766e;    --sent-bg:#ccfbf1;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+    a{color:var(--brand);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .topbar{background:var(--brand);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+    .topbar .logo{font-weight:700;font-size:18px}
+    .topbar a{color:#dbe7f5}
+    .wrap{max-width:1100px;margin:20px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    h1{font-size:22px;margin:0 0 14px}
+    h2{font-size:16px;margin:0 0 12px;color:var(--brand-d);border-bottom:2px solid var(--line);padding-bottom:6px}
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+    th{background:#f8fafc;color:var(--muted);font-weight:600;font-size:13px}
+    tr:hover td{background:#fafbff}
+    .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+    .badge-pending{color:var(--pending);background:var(--pending-bg)}
+    .badge-info{color:var(--info);background:var(--info-bg)}
+    .badge-approved{color:var(--approved);background:var(--approved-bg)}
+    .badge-rejected{color:var(--rejected);background:var(--rejected-bg)}
+    .badge-sent{color:var(--sent);background:var(--sent-bg)}
+    .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+    .tab{padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:14px}
+    .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+    .tab .n{font-weight:700;margin-inline-start:4px}
+    .search{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+    .search input{flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+    .btn{display:inline-block;padding:9px 16px;border-radius:8px;border:1px solid transparent;font-size:14px;font-weight:600;cursor:pointer}
+    .btn-primary{background:var(--brand);color:#fff}
+    .btn-approve{background:var(--approved);color:#fff}
+    .btn-reject{background:var(--rejected);color:#fff}
+    .btn-info{background:var(--info);color:#fff}
+    .btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line)}
+    .kv .k{color:var(--muted)}
+    .kv .v{font-weight:600}
+    .pill-list{margin:0;padding:0;list-style:none}
+    .pill-list li{padding:6px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;margin-bottom:6px;font-size:14px}
+    .pill-list.docs li{background:#eff6ff;border-color:#bfdbfe}
+    .email-box{background:#fbfcfe;border:1px solid var(--line);border-radius:8px;padding:14px}
+    .email-subj{font-weight:700;margin-bottom:8px}
+    .email-body{white-space:pre-wrap;font-family:inherit;line-height:1.6;margin:0}
+    .docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+    .doc{border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;background:#fff}
+    .doc img{max-width:100%;height:110px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+    .doc .name{font-size:12px;margin:6px 0 4px;word-break:break-all}
+    .flash{padding:10px 14px;border-radius:8px;margin-bottom:14px;font-weight:600}
+    .flash-ok{background:var(--approved-bg);color:var(--approved)}
+    .flash-err{background:var(--rejected-bg);color:var(--rejected)}
+    .muted{color:var(--muted)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    .actions textarea{width:100%;min-height:60px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit}
+    .back{font-size:14px}
+    @media (max-width:760px){ .grid2{grid-template-columns:1fr} th:nth-child(4),td:nth-child(4){display:none} }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="logo">מה זה קל · לוח בקרה למפעיל</div>
+    <div><a href="/dashboard">פניות</a> &nbsp;|&nbsp; <a href="/dashboard/logout">התנתקות</a></div>
+  </div>
+  <div class="wrap">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>
