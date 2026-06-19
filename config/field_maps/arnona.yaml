@@ -368,6 +368,12 @@ fields:
     type: file
     verified: true                     # "להעלות צילום של תעודת זהות" — primary upload
 
+  - jotform_id: "input34"              # bare key: JotForm's webhook rawRequest delivers
+    label: "תעודת_זהות"                #   file uploads under input{N}, not q{N}_input{N}.
+    section: documents                 #   Final URL lives here (verified 10/11 submissions).
+    type: file
+    verified: true                     # ['https://www.jotform.com/uploads/.../ת.ז.pdf']
+
   - jotform_id: "q35_input35"
     label: "תעודת_זהות"
     section: documents

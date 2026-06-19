@@ -77,11 +77,17 @@ class ArnonaService(BaseService):
             cleaned = self._coerce(value, ftype)
 
             if section in parsed:
-                # Non-empty value always wins; empty value only fills an unset label.
-                # Two fields can share the same label (different flow paths, e.g.
-                # q104 for "מתחיל שכירות" and q214 for "בעל בית" both map to
-                # partner[שם_פרטי]). The one that arrives with a real value wins.
-                if cleaned or label not in parsed[section]:
+                # A value with real content always wins; an empty/placeholder
+                # value only fills a label that is unset or itself empty — it
+                # never clobbers content. Two fields can share the same label
+                # (different flow paths, e.g. q104 for "מתחיל שכירות" and q214
+                # for "בעל בית" both map to partner[שם_פרטי]; file uploads arrive
+                # under both q34_input34 and the bare input34). The one carrying
+                # real content wins regardless of arrival order.
+                existing = parsed[section].get(label)
+                if (label not in parsed[section]
+                        or self._field_has_content(cleaned)
+                        or not self._field_has_content(existing)):
                     parsed[section][label] = cleaned
 
         # Apply auto-fills from conditional logic
@@ -197,6 +203,24 @@ class ArnonaService(BaseService):
         )
 
     # ── Coercion ──────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _field_has_content(value: Any) -> bool:
+        """
+        True if a coerced value carries real information (vs empty/placeholder).
+        File/signature fields coerce to a dict that is ALWAYS truthy, so a plain
+        `if value:` test wrongly treats an absent upload as content. Here a file
+        dict counts only when it was detected present or captured a URL.
+        """
+        if value is None:
+            return False
+        if isinstance(value, dict):
+            return bool(value.get("present") or value.get("url"))
+        if isinstance(value, (list, tuple)):
+            return len(value) > 0
+        if isinstance(value, bool):
+            return value
+        return bool(str(value).strip())
 
     @staticmethod
     def _coerce(value: Any, ftype: str) -> Any:
