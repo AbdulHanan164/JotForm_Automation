@@ -200,24 +200,40 @@ class Documents:
     tabu:           Any = None
 
     @staticmethod
-    def _doc_present(doc: Any) -> str:
+    def _doc_present(doc: Any, doc_type: str = "", submission_id: str = "") -> str:
         """Return '✅' if present, '❌' if missing."""
-        if doc is None:
-            return "❌"
-        if isinstance(doc, bool):
-            return "✅" if doc else "❌"
-        if isinstance(doc, dict):
-            return "✅" if (doc.get("present") or doc.get("url") or doc.get("local_path")) else "❌"
-        return "✅" if str(doc).strip() and str(doc).strip() != "❌" else "❌"
+        present = False
+        if doc is not None:
+            if isinstance(doc, bool):
+                present = doc
+            elif isinstance(doc, dict):
+                present = bool(doc.get("present") or doc.get("url") or doc.get("local_path"))
+            else:
+                present = str(doc).strip() and str(doc).strip() != "❌"
+        if present:
+            return "✅"
+            
+        if submission_id and doc_type:
+            try:
+                from app.config import settings
+                manifest_path = settings.documents_dir / submission_id / "_manifest.json"
+                if manifest_path.exists():
+                    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                    status = manifest.get("documents", {}).get(doc_type, {}).get("status")
+                    if status == "present":
+                        return "✅"
+            except Exception:
+                pass
+        return "❌"
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, submission_id: str = "") -> dict[str, Any]:
         return {
-            "id_photo":       self._doc_present(self.id_photo),
-            "lease_contract": self._doc_present(self.lease_contract),
-            "signature":      self._doc_present(self.signature),
-            "arnona_bill":    self._doc_present(self.arnona_bill),
-            "corp_cert":      self._doc_present(self.corp_cert),
-            "tabu":           self._doc_present(self.tabu),
+            "id_photo":       self._doc_present(self.id_photo, "id_photo", submission_id),
+            "lease_contract": self._doc_present(self.lease_contract, "lease_contract", submission_id),
+            "signature":      self._doc_present(self.signature, "signature", submission_id),
+            "arnona_bill":    self._doc_present(self.arnona_bill, "arnona_bill", submission_id),
+            "corp_cert":      self._doc_present(self.corp_cert, "corp_cert", submission_id),
+            "tabu":           self._doc_present(self.tabu, "tabu", submission_id),
         }
 
     @classmethod
@@ -285,6 +301,7 @@ class BusinessSubmission:
     partner:         Person | None  = None
     landlord:        Person | None  = None
     documents:       Documents      = field(default_factory=Documents)
+    submission_id:   str = ""
 
     # ── Serialization ─────────────────────────────────────────────────────────
 
@@ -300,7 +317,8 @@ class BusinessSubmission:
             "outgoing_tenant": self.outgoing_tenant.to_dict() if self.outgoing_tenant else None,
             "partner":         self.partner.to_dict()         if self.partner         else None,
             "landlord":        self.landlord.to_dict()        if self.landlord         else None,
-            "documents":       self.documents.to_dict(),
+            "documents":       self.documents.to_dict(self.submission_id),
+            "submission_id":   self.submission_id,
         }
 
     @classmethod
@@ -323,6 +341,7 @@ class BusinessSubmission:
             partner         = _person("partner"),
             landlord        = _person("landlord"),
             documents       = Documents.from_dict(d.get("documents", {})),
+            submission_id   = d.get("submission_id", ""),
         )
 
     # ── Fixed operator-facing summary ─────────────────────────────────────────
@@ -352,8 +371,8 @@ class BusinessSubmission:
             """Return value or 'לא סופק' placeholder."""
             return val if val else _N
 
-        def _doc(doc: Any) -> str:
-            return Documents._doc_present(doc)
+        def _doc(doc: Any, doc_type: str) -> str:
+            return Documents._doc_present(doc, doc_type, self.submission_id)
 
         # Services list: prefer multi-select field, fall back to package description
         services_list = self.submission.services_selected
@@ -454,12 +473,12 @@ class BusinessSubmission:
 
         # ── 11. Documents — ALWAYS shown, all 6 types ─────────────────────
         summary["מסמכים"] = {
-            "תעודת_זהות":       _doc(ds.id_photo),
-            "חוזה_שכירות":      _doc(ds.lease_contract),
-            "חתימה":             _doc(ds.signature),
-            "חשבון_ארנונה":      _doc(ds.arnona_bill),
-            "תעודת_התאגדות":     _doc(ds.corp_cert),
-            "נסח_טאבו":          _doc(ds.tabu),
+            "תעודת_זהות":       _doc(ds.id_photo,       "id_photo"),
+            "חוזה_שכירות":      _doc(ds.lease_contract, "lease_contract"),
+            "חתימה":             _doc(ds.signature,      "signature"),
+            "חשבון_ארנונה":      _doc(ds.arnona_bill,    "arnona_bill"),
+            "תעודת_התאגדות":     _doc(ds.corp_cert,      "corp_cert"),
+            "נסח_טאבו":          _doc(ds.tabu,           "tabu"),
         }
 
         # ── 12. Payment — ALWAYS shown ────────────────────────────────────

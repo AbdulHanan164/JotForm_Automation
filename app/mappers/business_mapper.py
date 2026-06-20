@@ -259,6 +259,7 @@ def build_from_parsed(parsed: dict[str, Any]) -> BusinessSubmission:
         tabu           = docs.get("נסח_טאבו"),
     )
 
+    sub_id = parsed.get("system", {}).get("submission_id", "") or parsed.get("submission_id", "")
     return BusinessSubmission(
         submission      = submission_meta,
         dates           = dates,
@@ -270,4 +271,5 @@ def build_from_parsed(parsed: dict[str, Any]) -> BusinessSubmission:
         partner         = partner_person,
         landlord        = landlord_person,
         documents       = documents,
+        submission_id   = sub_id,
     )

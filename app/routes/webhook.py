@@ -85,6 +85,25 @@ async def receive_webhook(
         "unknown"
     )
 
+    form_id = (
+        fields.get("formID") or
+        rr.get("formID") or
+        ""
+    )
+
+    # ── Handle Missing Documents Form (251323124205946) ───────────────────────
+    if form_id == "251323124205946":
+        logger.info("Processing Missing Documents Form submission %s in background", submission_id)
+        from app.pipeline.reconciliation_merge import reconcile_and_merge_for_missing_docs
+        background_tasks.add_task(reconcile_and_merge_for_missing_docs, fields)
+        return JSONResponse(
+            content={
+                "status": "received",
+                "message": "Missing Documents submission received and queued for reconciliation.",
+                "submission_id": submission_id
+            }
+        )
+
     # ── Step 4: Idempotency — check for duplicate ─────────────────────────────
     if submission_id != "unknown":
         duplicate = _check_duplicate(submission_id)

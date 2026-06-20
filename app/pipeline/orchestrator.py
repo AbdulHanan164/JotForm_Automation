@@ -215,6 +215,15 @@ def run_pipeline(
     # Promote it to result.business_data so it's accessible without going through parsed.
     result.business_data = result.parsed.get("_business", {})
 
+    # ── Stage 4.8: Local Missing Documents Reconciliation ─────────────────────
+    if result.submission_id != "unknown" and result.form_id == "250201745267957":
+        try:
+            from app.pipeline.reconciliation_merge import reconcile_and_merge_for_original
+            reconcile_and_merge_for_original(result.submission_id, result.parsed)
+            result.business_data = result.parsed.get("_business", {})
+        except Exception as exc:
+            logger.warning("Missing documents reconciliation merge error: %s", exc)
+
     # ── Stage 5: Document extraction ──────────────────────────────────────────
     try:
         from app.documents.extractor import extract_all

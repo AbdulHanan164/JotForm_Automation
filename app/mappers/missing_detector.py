@@ -180,11 +180,29 @@ def _detect_info(bs: BusinessSubmission, vis: dict[str, bool]) -> list[dict]:
     return items
 
 
+def is_doc_resolved_in_manifest(submission_id: str, doc_type: str) -> bool:
+    if not submission_id:
+        return False
+    try:
+        import json
+        from pathlib import Path
+        from app.config import settings
+        manifest_path = settings.documents_dir / submission_id / "_manifest.json"
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            status = manifest.get("documents", {}).get(doc_type, {}).get("status")
+            return status == "present"
+    except Exception:
+        pass
+    return False
+
+
 # ── Document rules ────────────────────────────────────────────────────────────
 
 def _detect_docs(bs: BusinessSubmission) -> list[dict]:
     items: list[dict] = []
     docs = bs.documents
+    sub_id = bs.submission_id
 
     def _flag(rule_id: str, label: str, reason: str) -> None:
         items.append({
@@ -194,23 +212,30 @@ def _detect_docs(bs: BusinessSubmission) -> list[dict]:
             "rule_triggered": rule_id,
         })
 
-    if not bs.incoming_tenant.is_company and not _doc_present(docs.id_photo):
+    def _is_present(doc: Any, doc_type: str) -> bool:
+        if _doc_present(doc):
+            return True
+        if sub_id and is_doc_resolved_in_manifest(sub_id, doc_type):
+            return True
+        return False
+
+    if not bs.incoming_tenant.is_company and not _is_present(docs.id_photo, "id_photo"):
         _flag("id_photo", "תעודת_זהות", "נדרש לצורך אימות זהות")
 
-    if not _doc_present(docs.lease_contract):
+    if not _is_present(docs.lease_contract, "lease_contract"):
         _flag("lease_contract", "חוזה_שכירות", "נדרש להוכחת זכאות לדירה")
 
-    if not _doc_present(docs.signature):
+    if not _is_present(docs.signature, "signature"):
         _flag("signature", "חתימה", "נדרש לאישור הבקשה")
 
-    if not _doc_present(docs.arnona_bill):
+    if not _is_present(docs.arnona_bill, "arnona_bill"):
         _flag("arnona_bill", "חשבון_ארנונה",
               "נדרש לאימות מספר הנכס ופרטי חשבון הארנונה")
 
     if bs.incoming_tenant.is_company:
-        if not _doc_present(docs.corp_cert):
+        if not _is_present(docs.corp_cert, "corp_cert"):
             _flag("corp_cert", "תעודת_התאגדות", "נדרש לאימות חברה")
-        if not _doc_present(docs.tabu):
+        if not _is_present(docs.tabu, "tabu"):
             _flag("tabu", "נסח_טאבו", "נדרש לאימות בעלות")
 
     return items

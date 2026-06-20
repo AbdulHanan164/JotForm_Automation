@@ -63,6 +63,7 @@ class ArnonaService(BaseService):
             fm.S_FHS:      {},
             "_unmapped":   {},
         }
+        parsed[fm.S_SYSTEM]["submission_id"] = raw_fields.get("submissionID") or ""
 
         for field_id, value in raw_fields.items():
             mapping = fm.FIELD_MAP.get(field_id)
