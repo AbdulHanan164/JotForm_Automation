@@ -136,18 +136,75 @@ def run_pipeline(
     merged = {**result.raw_request, **{k: v for k, v in raw_fields.items()}}
 
     # ── Stage 3: Conditional logic ────────────────────────────────────────────
-    logic_engine = service.get_conditional_logic_engine()
-    if logic_engine:
-        # We need a pre-parse to evaluate conditions (basic fields only)
-        pre_parsed = service.parse_fields(merged)
-        result.visibility = logic_engine.evaluate(pre_parsed)
-        logger.info(
-            "Conditional logic: %d fields hidden",
-            sum(1 for v in result.visibility.values() if not v),
+    pre_parsed = None
+    _evaluator_used = False
+    try:
+        from app.pipeline.schema_loader import get_schema
+        from app.pipeline.evaluator import (
+            JotFormConditionEvaluator,
+            build_label_visibility,
+            build_explanations,
         )
-    else:
-        pre_parsed = None
-        result.visibility = {}
+        from app.services.arnona.field_map import FIELD_MAP
+
+        schema = get_schema(result.form_id)
+        if schema is None:
+            raise FileNotFoundError(f"No cached schema for form {result.form_id}")
+
+        evaluator    = JotFormConditionEvaluator(schema)
+        eval_out     = evaluator.evaluate(merged)
+        flat_answers = eval_out["flat_answers"]
+
+        label_vis, active_qids, audit_records = build_label_visibility(
+            eval_out["visibility_map"], FIELD_MAP, flat_answers
+        )
+        explanations = build_explanations(
+            evaluator.conditions, flat_answers, eval_out["visibility_map"], evaluator
+        )
+
+        result.visibility = label_vis
+        result.evaluator_result = {
+            "engine":           "JotFormConditionEvaluator",
+            "form_id":          result.form_id,
+            "submission_id":    result.submission_id,
+            "visibility_map":   eval_out["visibility_map"],
+            "required_map":     eval_out["required_map"],
+            "visible_fields":   eval_out["visible_fields"],
+            "hidden_fields":    eval_out["hidden_fields"],
+            "required_fields":  eval_out["required_fields"],
+            "required_documents": eval_out["required_documents"],
+            "label_visibility": label_vis,
+            "active_qids":      active_qids,
+            "explanations":     explanations,
+            "label_visibility_audit": audit_records,
+        }
+        _evaluator_used = True
+        logger.info(
+            "JotFormConditionEvaluator: %d hidden QIDs, %d hidden labels",
+            len(eval_out["hidden_fields"]),
+            sum(1 for v in label_vis.values() if not v),
+        )
+
+    except Exception as exc:
+        logger.warning(
+            "JotFormConditionEvaluator failed — falling back to legacy engine: %s", exc
+        )
+        result.evaluator_result = {"engine": "legacy_fallback", "error": str(exc)}
+
+    # ── Legacy fallback ───────────────────────────────────────────────
+    if not _evaluator_used:
+        logic_engine = service.get_conditional_logic_engine()
+        if logic_engine:
+            # We need a pre-parse to evaluate conditions (basic fields only)
+            pre_parsed = service.parse_fields(merged)
+            result.visibility = logic_engine.evaluate(pre_parsed)
+            logger.info(
+                "Legacy conditional logic fallback: %d fields hidden",
+                sum(1 for v in result.visibility.values() if not v),
+            )
+        else:
+            pre_parsed = None
+            result.visibility = {}
 
     # ── Stage 4: Parse fields ─────────────────────────────────────────────────
     # Reuse pre_parsed if we already did it, otherwise parse now

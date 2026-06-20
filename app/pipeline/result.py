@@ -40,6 +40,7 @@ class PipelineResult:
     # ── Conditional logic ─────────────────────────────────────────────────────
     visibility: dict[str, bool] = field(default_factory=dict)
     # field_label → True/False (False = hidden by JotForm, must not be flagged missing)
+    evaluator_result: dict[str, Any] | None = None
 
     # ── Document extraction ───────────────────────────────────────────────────
     doc_extractions: dict[str, Any] = field(default_factory=dict)
@@ -123,6 +124,7 @@ class PipelineResult:
             "_summary":         self.summary,
             "_missing":         self.missing,
             "_visibility":      self.visibility,
+            "_evaluator":       self.evaluator_result,
             "_validation_issues": [i.to_dict() for i in self.validation_issues],
             "_doc_extractions": self.doc_extractions,
             "_unified_view":    self.unified_view,
