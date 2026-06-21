@@ -68,24 +68,57 @@ def _is_company(basic: dict) -> bool:
     return "חברה" in ptype or "עסק" in ptype or "תאגיד" in ptype
 
 
-def _detect_transaction_type(package: str, transfer_to: str) -> str:
+def _detect_transaction_type(basic: dict, package: str, transfer_to: str) -> str:
     """
-    Derive transaction type from package description and transfer_to field.
-
-    Package descriptions (from CSV col 96):
-      "העברת חשבון ארנונה - אדם פרטי - שכירות (Amount: 99.00 ILS)"  → rental_transfer
-      "העברת חשבון ארנונה- קניה/מכירה/תאגיד (Amount: 149.00 ILS)"  → sale_transfer
-      "גמר חשבון - תשלום אחרון לאחר עזיבה (Amount: 79.00 ILS)"     → account_closure
-
-    Transfer-to field (Hebrew label: "למי מעבירים את החשבון?"):
-      "בעל הנכס" → owner_transfer
+    Derive transaction type from Q3 (סוג_מעבר), Q6 (סוג_לקוח), Q7 (סוג_משכיר),
+    and Q209 (שותפים) instead of payment metadata. Falls back to package description
+    and transfer_to field if Q3 is not populated to maintain backward compatibility.
     """
-    pkg = package.lower()
+    move_type = _s(basic.get("סוג_מעבר", ""))
+    customer_type = _s(basic.get("סוג_לקוח", ""))
+    landlord_role = _s(basic.get("סוג_משכיר", ""))
+    partner_type = _s(basic.get("שותפים", ""))
+
+    if move_type == "מתחיל שכירות":
+        if "חברה" in customer_type or "עסק" in customer_type or "תאגיד" in customer_type:
+            return "rental_start_company"
+        if partner_type == "שותפים":
+            return "rental_start_roommates"
+        if partner_type == "זוג נשוי":
+            return "rental_start_couple"
+        return "rental_start_single"
+
+    elif move_type == "מסיים שכירות":
+        if "חברה" in customer_type or "עסק" in customer_type or "תאגיד" in customer_type:
+            return "rental_termination_company"
+        if partner_type == "שותפים":
+            return "rental_termination_roommates"
+        if partner_type == "זוג נשוי":
+            return "rental_termination_couple"
+        return "rental_termination_single"
+
+    elif move_type == "בעל בית":
+        if landlord_role == "משכיר":
+            if partner_type == "שותפים":
+                return "landlord_rental_roommates"
+            if partner_type == "זוג נשוי":
+                return "landlord_rental_couple"
+            return "landlord_rental_single"
+        elif landlord_role == "קונה":
+            return "sale_purchase"
+        elif landlord_role == "מוכר":
+            return "sale_transfer"
+        elif landlord_role == "חוזר לנכס":
+            return "owner_return"
+
+    # Fallback to old package-based string matching if Q3/Q7 are not populated
+    pkg = (package or "").lower()
     if "גמר חשבון" in pkg:
         return "account_closure"
     if "קניה" in pkg or "מכירה" in pkg or "תאגיד" in pkg:
         return "sale_transfer"
-    if "בעל הנכס" in transfer_to or "בעל_הנכס" in transfer_to:
+    tf = (transfer_to or "")
+    if "בעל הנכס" in tf or "בעל_הנכס" in tf:
         return "owner_transfer"
     return "rental_transfer"
 
@@ -130,7 +163,7 @@ def build_from_parsed(parsed: dict[str, Any]) -> BusinessSubmission:
     # ── Submission metadata ───────────────────────────────────────────────────
     package     = _coalesce(fhs.get("package"), payment.get("שם_שירות"))
     transfer_to = _s(basic.get("לאן_להעביר", ""))
-    txn_type    = _detect_transaction_type(package, transfer_to)
+    txn_type    = _detect_transaction_type(basic, package, transfer_to)
 
     raw_amount = payment.get("סכום", "")
     try:
@@ -154,63 +187,108 @@ def build_from_parsed(parsed: dict[str, Any]) -> BusinessSubmission:
         transfer_to         = transfer_to,
     )
 
+    move_type = _s(basic.get("סוג_מעבר", ""))
+    landlord_role = _s(basic.get("סוג_משכיר", ""))
+
+    # Determine raw source sections
+    inc_src = customer
+    part_src = partner
+    out_src = outgoing
+    ll_src = landlord
+
+    if move_type == "מתחיל שכירות":
+        inc_src = customer
+        part_src = partner
+        out_src = outgoing
+        ll_src = landlord
+    elif move_type == "מסיים שכירות":
+        inc_src = {}
+        part_src = partner
+        out_src = customer
+        ll_src = landlord
+    elif move_type == "בעל בית":
+        if landlord_role == "משכיר":
+            inc_src = partner
+            part_src = {}
+            out_src = outgoing
+            ll_src = customer
+        elif landlord_role == "קונה":
+            inc_src = customer
+            part_src = partner
+            out_src = outgoing
+            ll_src = {}
+        elif landlord_role == "מוכר":
+            inc_src = outgoing
+            part_src = partner
+            out_src = customer
+            ll_src = {}
+        elif landlord_role == "חוזר לנכס":
+            inc_src = customer
+            part_src = partner
+            out_src = outgoing
+            ll_src = customer
+
     # ── Incoming tenant ───────────────────────────────────────────────────────
-    # FHS "incoming_full_name" is the normalized name from any of the 3 form paths.
-    # Until FHS IDs are configured this will be empty, so _join_name(customer) is used.
-    in_name = _coalesce(fhs.get("incoming_full_name"), _join_name(customer))
+    in_name = _coalesce(fhs.get("incoming_full_name"), _join_name(inc_src))
     incoming_tenant = Person(
         full_name    = in_name,
-        first_name   = _s(customer.get("שם_פרטי", "")),
-        last_name    = _s(customer.get("שם_משפחה", "")),
-        id_number    = _coalesce(fhs.get("incoming_id"), customer.get("תעודת_זהות")),
-        phone        = _coalesce(fhs.get("incoming_phone"), customer.get("טלפון")),
-        email        = _coalesce(fhs.get("incoming_email"), customer.get("אימייל")),
+        first_name   = _s(inc_src.get("שם_פרטי", "")),
+        last_name    = _s(inc_src.get("שם_משפחה", "")),
+        id_number    = _coalesce(fhs.get("incoming_id"), inc_src.get("תעודת_זהות")),
+        phone        = _coalesce(fhs.get("incoming_phone"), inc_src.get("טלפון")),
+        email        = _coalesce(fhs.get("incoming_email"), inc_src.get("אימייל")),
         is_company   = _is_company(basic),
-        company_name = _s(customer.get("שם_חברה", "")),
-        company_reg  = _s(customer.get("מספר_חברה", "")),
+        company_name = _s(inc_src.get("שם_חברה", "")),
+        company_reg  = _s(inc_src.get("מספר_חברה", "")),
     )
 
     # ── Outgoing tenant ───────────────────────────────────────────────────────
-    out_name  = _coalesce(fhs.get("outgoing_full_name"), _join_name(outgoing))
-    out_phone = _coalesce(fhs.get("outgoing_phone"), outgoing.get("טלפון"))
-    out_id    = _coalesce(fhs.get("outgoing_id"), outgoing.get("תעודת_זהות"))
+    out_name  = _coalesce(fhs.get("outgoing_full_name"), _join_name(out_src))
+    out_phone = _coalesce(fhs.get("outgoing_phone"), out_src.get("טלפון"))
+    out_id    = _coalesce(fhs.get("outgoing_id"), out_src.get("תעודת_זהות"))
     outgoing_tenant: Person | None = None
     if out_name or out_phone or out_id:
         outgoing_tenant = Person(
-            full_name = out_name,
-            id_number = out_id,
-            phone     = out_phone,
-            email     = _coalesce(fhs.get("outgoing_email"), outgoing.get("אימייל")),
+            full_name    = out_name,
+            first_name   = _s(out_src.get("שם_פרטי", "")),
+            last_name    = _s(out_src.get("שם_משפחה", "")),
+            id_number    = out_id,
+            phone        = out_phone,
+            email        = _coalesce(fhs.get("outgoing_email"), out_src.get("אימייל")),
         )
 
     # ── Partner (second tenant) ───────────────────────────────────────────────
-    part_name  = _coalesce(fhs.get("partner_full_name"), _join_name(partner))
-    part_phone = _coalesce(fhs.get("partner_phone"), partner.get("טלפון"))
-    part_id    = _coalesce(fhs.get("partner_id"), partner.get("תעודת_זהות"))
+    part_name  = _coalesce(fhs.get("partner_full_name"), _join_name(part_src))
+    part_phone = _coalesce(fhs.get("partner_phone"), part_src.get("טלפון"))
+    part_id    = _coalesce(fhs.get("partner_id"), part_src.get("תעודת_זהות"))
     partner_person: Person | None = None
     if part_name or part_phone or part_id:
         partner_person = Person(
-            full_name = part_name,
-            id_number = part_id,
-            phone     = part_phone,
-            email     = _coalesce(fhs.get("partner_email"), partner.get("אימייל")),
+            full_name    = part_name,
+            first_name   = _s(part_src.get("שם_פרטי", "")),
+            last_name    = _s(part_src.get("שם_משפחה", "")),
+            id_number    = part_id,
+            phone        = part_phone,
+            email        = _coalesce(fhs.get("partner_email"), part_src.get("אימייל")),
         )
 
     # ── Landlord ──────────────────────────────────────────────────────────────
     ll_name  = _coalesce(
         fhs.get("landlord_full_name"),
-        _join_name(landlord),
-        landlord.get("שם_מלא"),
+        _join_name(ll_src),
+        ll_src.get("שם_מלא"),
     )
-    ll_phone = _coalesce(fhs.get("landlord_phone"), landlord.get("טלפון"))
-    ll_id    = _coalesce(fhs.get("landlord_id"), landlord.get("תעודת_זהות"))
+    ll_phone = _coalesce(fhs.get("landlord_phone"), ll_src.get("טלפון"))
+    ll_id    = _coalesce(fhs.get("landlord_id"), ll_src.get("תעודת_זהות"))
     landlord_person: Person | None = None
     if ll_name or ll_phone or ll_id:
         landlord_person = Person(
-            full_name = ll_name,
-            id_number = ll_id,
-            phone     = ll_phone,
-            email     = _coalesce(fhs.get("landlord_email"), landlord.get("אימייל")),
+            full_name    = ll_name,
+            first_name   = _s(ll_src.get("שם_פרטי", "")),
+            last_name    = _s(ll_src.get("שם_משפחה", "")),
+            id_number    = ll_id,
+            phone        = ll_phone,
+            email        = _coalesce(fhs.get("landlord_email"), ll_src.get("אימייל")),
         )
 
     # ── Property ──────────────────────────────────────────────────────────────

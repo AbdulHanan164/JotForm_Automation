@@ -49,6 +49,8 @@ _ACCOUNT_IDS_EXPECTED_MISSING_ON_ARRIVAL = {
 def _is_new_registration(transaction_type: str) -> bool:
     """True when account numbers don't exist yet (created after processing)."""
     t = (transaction_type or "").lower()
+    if t.startswith("rental_start_") or t in ("owner_return", "sale_purchase"):
+        return True
     return ("כניסה" in t) or ("new" in t) or ("arrival" in t)
 
 
