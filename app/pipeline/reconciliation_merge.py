@@ -25,47 +25,191 @@ class DocumentClassifier(ABC):
         pass
 
 class FilenameClassifier(DocumentClassifier):
+    """
+    Upgraded FilenameClassifier — Phase 10A.
+
+    Improvements over Phase 9:
+      1. Hebrew normalization: strips RTL/LTR marks, normalises separators,
+         resolves dot/space variants (ת.ז → תז, ת ז → תז).
+      2. Hebrew abbreviation support: תז, ספח, ת"ז, ת.ז → id_photo.
+      3. Extended document-type synonyms: water_meter, electricity_meter,
+         gas_bill, gas_meter, tabu_document, sale_contract.
+      4. Multi-word confidence scoring:
+           STRONG (≥ 2 Hebrew words matched) → 0.95
+           SINGLE Hebrew keyword              → 0.90
+           English-only keyword               → 0.90
+           No match                           → 0.00
+
+    Confidence model
+    ----------------
+    A file auto-merges when confidence ≥ 0.90 and classifier == FilenameClassifier.
+    Every rule below returns exactly 0.95 (multi-word) or 0.90 (single keyword).
+    0.00 means no deterministic classification is possible.
+    """
+
+    # ── Normalisation helpers ───────────────────────────────────────────────
+
+    # Unicode directional marks that sometimes wrap Hebrew text in URLs
+    _BIDI_MARKS = "\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
+
+    @staticmethod
+    def _normalise(raw: str) -> str:
+        """
+        Return a clean, lower-cased search string from a raw filename.
+
+        Steps:
+          1. URL-decode (%XX sequences).
+          2. Strip Unicode directional / bidi marks.
+          3. Collapse underscores, hyphens, dots between Hebrew chars → space.
+          4. Collapse runs of whitespace → single space.
+          5. Lowercase (Hebrew characters are case-insensitive; Latin is lowercased).
+          6. Produce a second form where "ת.ז" / "ת ז" / "ת\"ז" → "תז"
+             (stored as a separate normalised token stream for abbreviation lookup).
+        """
+        from urllib.parse import unquote
+        import unicodedata
+        import re
+
+        # 1. URL-decode
+        s = unquote(raw)
+
+        # 2. Strip bidi marks
+        for ch in FilenameClassifier._BIDI_MARKS:
+            s = s.replace(ch, "")
+
+        # 3. Replace underscores and hyphens with spaces
+        s = s.replace("_", " ").replace("-", " ")
+
+        # 4. Collapse whitespace
+        s = re.sub(r"\s+", " ", s).strip()
+
+        # 5. Lowercase
+        s = s.lower()
+
+        return s
+
+    @staticmethod
+    def _normalise_abbrevs(s: str) -> str:
+        """
+        Secondary normalisation: resolve common abbreviation forms so that
+        'ת.ז', 'ת"ז', 'ת ז', 'ת/ז' all become 'תז'.
+        """
+        import re
+        # ת.ז / ת"ז / ת'ז / ת/ז → תז
+        s = re.sub(r'ת[.\"\'\\/\s]ז', 'תז', s)
+        # ספ ח → ספח (rare but seen in scanned names)
+        s = re.sub(r'ספ\s+ח', 'ספח', s)
+        return s
+
+    # ── Rule table ──────────────────────────────────────────────────────────
+    # Each entry: (document_type, confidence, [keywords_that_must_appear_in_normalised_fn])
+    # Keywords are OR-evaluated — first match wins.
+    # Entries earlier in the list take priority.
+    #
+    # Confidence guide:
+    #   0.95 — multi-word Hebrew phrase (very specific; very low false-positive rate)
+    #   0.90 — single Hebrew keyword (specific; low false-positive rate)
+    #   0.90 — English keyword (specific; low false-positive rate)
+    #
+    # All values ≥ 0.90 → auto-merge allowed.
+
+    _RULES: list[tuple[str, float, list[str]]] = [
+        # ── Identity documents ─────────────────────────────────────────────
+        # Multi-word Hebrew phrases (0.95)
+        ("id_photo", 0.95, ["תעודת זהות", "תז וספח", "תז וספח"]),
+        ("id_photo", 0.95, ["צילום תז", "צילום ת.ז"]),
+        # Single Hebrew keywords / abbreviations (0.90)
+        ("id_photo", 0.90, ["תז", "ספח", "דרכון", "פספורט"]),
+        # English keywords (0.90)
+        ("id_photo", 0.90, ["passport", "zehut", "id card", "identity"]),
+
+        # ── Lease contract ─────────────────────────────────────────────────
+        # Multi-word (0.95)
+        ("lease_contract", 0.95, ["חוזה שכירות", "חוזה מכר חתום", "הסכם שכירות"]),
+        ("lease_contract", 0.95, ["סיום שכירות", "שכירות חתום", "חוזה חתום"]),
+        # Single Hebrew (0.90)
+        ("lease_contract", 0.90, ["חוזה", "שכירות", "הסכם", "השכרה"]),
+        # English (0.90)
+        ("lease_contract", 0.90, ["lease", "contract", "rental agreement", "tenancy"]),
+
+        # ── Sale contract (separate doc type) ──────────────────────────────
+        ("sale_contract", 0.95, ["חוזה מכר"]),
+        ("sale_contract", 0.90, ["מכר", "רכישה"]),
+        ("sale_contract", 0.90, ["sale", "purchase agreement"]),
+
+        # ── Arnona (municipal tax) bill ─────────────────────────────────────
+        ("arnona_bill", 0.95, ["חשבון ארנונה", "צילום ארנונה"]),
+        ("arnona_bill", 0.90, ["ארנונה"]),
+        ("arnona_bill", 0.90, ["arnona", "municipal tax"]),
+
+        # ── Water ──────────────────────────────────────────────────────────
+        ("water_meter", 0.95, ["קריאת מונה מים", "מונה מים"]),
+        ("water_bill",  0.95, ["חשבון מים"]),
+        ("water_bill",  0.90, ["מים"]),
+        ("water_bill",  0.90, ["water bill", "water meter"]),
+
+        # ── Electricity ────────────────────────────────────────────────────
+        ("electricity_meter", 0.95, ["קריאת מונה חשמל", "מונה חשמל"]),
+        ("electricity_bill",  0.95, ["חשבון חשמל"]),
+        ("electricity_bill",  0.90, ["חשמל"]),
+        ("electricity_bill",  0.90, ["electric", "electricity"]),
+
+        # ── Gas ────────────────────────────────────────────────────────────
+        ("gas_meter", 0.95, ["קריאת מונה גז", "מונה גז"]),
+        ("gas_bill",  0.95, ["חשבון גז"]),
+        ("gas_bill",  0.90, ["גז"]),
+        ("gas_bill",  0.90, ["gas bill", "gas meter"]),
+
+        # ── Tabu (land registry extract) ───────────────────────────────────
+        ("tabu_document", 0.95, ["נסח טאבו", "נסח רשם הקרקעות"]),
+        ("tabu_document", 0.90, ["טאבו", "נסח"]),
+        ("tabu_document", 0.90, ["tabu", "land registry"]),
+
+        # ── Corp cert ──────────────────────────────────────────────────────
+        ("corp_cert", 0.95, ["תעודת התאגדות", "אישור התאגדות"]),
+        ("corp_cert", 0.90, ["התאגדות", "עוסק מורשה"]),
+        ("corp_cert", 0.90, ["corp", "company reg", "incorporation"]),
+
+        # ── Signature ──────────────────────────────────────────────────────
+        ("signature", 0.90, ["חתימה"]),
+        ("signature", 0.90, ["signature", "signed"]),
+    ]
+
     def classify(self, file_path: str, context: dict[str, Any] | None = None) -> ClassificationResult:
         filename = Path(file_path).name
-        from urllib.parse import unquote
-        fn = unquote(filename).lower()
-        
-        doc_type = ""
-        reason = ""
-        
-        if any(x in fn for x in ["תעודת זהות", "תעודת_זהות", "תז שלי", "תז.pdf", "תז.jpg", "תז.png", "דרכון", "zehut", "passport", "ת.ז", "ת\"ז"]):
-            doc_type = "id_photo"
-            reason = f"Matched ID photo keywords in filename: '{filename}'"
-        elif any(x in fn for x in ["חוזה", "שכירות", "הסכם", "מכר", "רכישה", "השכרה", "lease", "contract", "rent", "sale"]):
-            doc_type = "lease_contract"
-            reason = f"Matched lease contract keywords in filename: '{filename}'"
-        elif any(x in fn for x in ["ארנונה", "arnona"]):
-            doc_type = "arnona_bill"
-            reason = f"Matched Arnona keywords in filename: '{filename}'"
-        elif any(x in fn for x in ["טאבו", "tabu"]):
-            doc_type = "tabu"
-            reason = f"Matched Tabu keywords in filename: '{filename}'"
-        elif any(x in fn for x in ["התאגדות", "חברה", "corp", "company"]):
-            doc_type = "corp_cert"
-            reason = f"Matched Corp Cert keywords in filename: '{filename}'"
-        elif any(x in fn for x in ["חתימה", "signature", "sign"]):
-            doc_type = "signature"
-            reason = f"Matched signature keywords in filename: '{filename}'"
-            
-        if doc_type:
-            return {
-                "document_type": doc_type,
-                "confidence": 0.95,
-                "reason": reason,
-                "classifier": "FilenameClassifier"
-            }
-            
+
+        # Normalise
+        norm = self._normalise(filename)
+        norm_abbrev = self._normalise_abbrevs(norm)
+
+        # Strip the file extension from the search string so that e.g.
+        # "תז.pdf" doesn't confuse patterns that look for "ז"
+        import re
+        norm_nostem = re.sub(r'\.[a-z0-9]{2,5}$', '', norm_abbrev).strip()
+
+        # Try each rule in priority order
+        for doc_type, confidence, keywords in self._RULES:
+            for kw in keywords:
+                # Check both the extension-stripped form and the full form
+                if kw in norm_abbrev or kw in norm_nostem:
+                    matched_kw = kw
+                    return {
+                        "document_type": doc_type,
+                        "confidence": confidence,
+                        "reason": (
+                            f"Matched '{matched_kw}' → {doc_type} "
+                            f"(conf={confidence:.2f}) in '{filename}'"
+                        ),
+                        "classifier": "FilenameClassifier",
+                    }
+
         return {
             "document_type": "",
             "confidence": 0.0,
             "reason": f"No keywords matched in filename '{filename}'",
-            "classifier": "FilenameClassifier"
+            "classifier": "FilenameClassifier",
         }
+
 
 class CheckboxClassifier(DocumentClassifier):
     def classify(self, file_path: str, context: dict[str, Any] | None = None) -> ClassificationResult:
