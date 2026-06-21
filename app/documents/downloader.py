@@ -294,15 +294,24 @@ def _download_file(url: str, dest_dir: Path, label: str) -> dict[str, Any]:
 
 
 def _with_api_key(url: str) -> str:
-    """Append JotForm API key to URL if configured."""
+    """Append JotForm API key to URL if configured, and ensure the URL is quoted properly."""
     try:
         from app.config import settings
         key = settings.jotform_api_key
         if key and "jotform.com" in url:
             sep = "&" if "?" in url else "?"
-            return f"{url}{sep}apiKey={key}"
+            url = f"{url}{sep}apiKey={key}"
     except Exception:
         pass
+
+    try:
+        from urllib.parse import urlsplit, urlunsplit, quote
+        parts = urlsplit(url)
+        quoted_path = quote(parts.path, safe='/')
+        url = urlunsplit((parts.scheme, parts.netloc, quoted_path, parts.query, parts.fragment))
+    except Exception:
+        pass
+
     return url
 
 

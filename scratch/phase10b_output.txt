@@ -1,0 +1,118 @@
+﻿================================================================================
+PHASE 10B AUDIT ΓÇö AI Vision Classification Feasibility
+================================================================================
+
+Total unresolved files after Phase 10A: 69
+
+Category breakdown:
+  Other               :  21 files
+  WhatsApp_Image      :  20 files
+  IMG_                :  12 files
+  Screenshot          :  11 files
+  UUID                :   5 files
+
+Extension breakdown:
+  .jpeg     :  33 files
+  .jpg      :  23 files
+  .pdf      :   8 files
+  .png      :   5 files
+
+================================================================================
+FULL FILE TABLE
+================================================================================
+    #  Filename                                            Cat               Candidates                           AI Conf
+  ------------------------------------------------------------------------------------------------------------------------
+    1  WhatsApp_Image_2026-06-16_at_16.29.27.jpeg          WhatsApp_Image    id_photo, water_meter, arnona_bil      0.92
+    2  WhatsApp_Image_2026-06-16_at_16.29.02.jpeg          WhatsApp_Image    id_photo, water_meter, arnona_bil      0.92
+    3  WhatsApp_Image_2026-06-16_at_16.31.10.jpeg          WhatsApp_Image    id_photo, water_meter, arnona_bil      0.92
+    4  WhatsApp_Image_2026-06-16_at_16.51.28.jpeg          WhatsApp_Image    id_photo, water_meter, arnona_bil      0.92
+    5  ╫á╫ÿ╫£╫Ö╫ö_╫ù╫¬╫ò╫¥_╫ö╫í╫¢╫¥_╫⌐╫¢╫Ö╫¿╫ò╫¬_2026_╫É╫£╫á╫æ╫Ö_166.pdf           Other             electricity_meter, water_meter, l      0.80
+    6  WhatsApp_Image_2026-06-10_at_13.18.46.jpeg          WhatsApp_Image    electricity_meter, water_meter, l      0.92
+    7  WhatsApp_Image_2026-06-10_at_13.18.46_28129.jpeg    WhatsApp_Image    electricity_meter, water_meter, l      0.92
+    8  ╫ª╫Ö╫£╫ò╫¥_╫ù╫⌐╫æ╫ò╫ƒ_╫Æ╫û.pdf                                  Other             gas_bill                               0.80
+    9  ╫É╫Ö╫⌐╫ò╫¿_╫ó╫Ö╫¿╫Ö╫Ö╫ö_╫£╫ÿ╫É╫æ╫ò_28229.pdf                        Other             gas_meter, tabu_document               0.80
+   10  ╫ù╫ò╫û╫ö_╫₧╫¢╫Ö╫¿╫ö_╫ù╫¬╫ò╫¥.pdf                                 Other             gas_meter, tabu_document               0.80
+   11  WhatsApp_Image_2026-06-03_at_17.42.19_28329.jpeg    WhatsApp_Image    lease_contract                         0.92
+   12  WhatsApp_Image_2026-06-03_at_17.42.19_28229.jpeg    WhatsApp_Image    lease_contract                         0.92
+   13  WhatsApp_Image_2026-06-03_at_17.42.19_28429.jpeg    WhatsApp_Image    lease_contract                         0.92
+   14  WhatsApp_Image_2026-06-03_at_17.42.19_28129.jpeg    WhatsApp_Image    lease_contract                         0.92
+   15  WhatsApp_Image_2026-06-03_at_17.42.19_28529.jpeg    WhatsApp_Image    lease_contract                         0.92
+   16  WhatsApp_Image_2026-06-03_at_17.42.19.jpeg          WhatsApp_Image    lease_contract                         0.92
+   17  WhatsApp_Image_2026-06-03_at_17.42.19_28629.jpeg    WhatsApp_Image    lease_contract                         0.92
+   18  8def5d98-f521-4526-af4e-d6818c8155ad.jpeg           UUID              electricity_meter, water_meter, e      0.82
+   19  c99f90a1-012f-483b-b396-566261754e7f.jpeg           UUID              electricity_meter, water_meter, e      0.82
+   20  IMG_8350.png                                        IMG_              electricity_meter, water_meter, e      0.88
+   21  IMG_8325.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   22  IMG_8315.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   23  IMG_8317.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   24  IMG_8316.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   25  IMG_8318.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   26  IMG_8320.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   27  IMG_8319.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   28  IMG_8321.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   29  IMG_8322.jpeg                                       IMG_              electricity_meter, water_meter, e      0.88
+   30  IMG_8355.png                                        IMG_              electricity_meter, water_meter, e      0.88
+   31  IMG_8354.png                                        IMG_              electricity_meter, water_meter, e      0.88
+   32  crft.png                                            Other             electricity_meter, id_photo, wate      0.80
+   33  ╨í╨║╨░╨╜_20260602 (2).png                               Other             electricity_meter, id_photo, wate      0.80
+   34  IMG20260601171301.jpg                               Other             electricity_meter, id_photo, wate      0.80
+   35  pending-1780919657-IMG20260601145417.jpg            Other             electricity_meter, id_photo, wate      0.80
+   36  ╤é╨╖.pdf                                              Other             electricity_meter, id_photo, wate      0.80
+   37  ╨┤╨╛╨│.pdf                                             Other             electricity_meter, id_photo, wate      0.80
+   38  ╨╗╤Ç╨│.pdf                                             Other             electricity_meter, id_photo, wate      0.80
+   39  ΓÇÄΓü¿╫ö╫í╫¢╫¥ ╫¿╫¢╫Ö╫⌐╫ö ╫ù╫¬╫ò╫¥Γü⌐.pdf                              Other             lease_contract                         0.80
+   40  d8fcbee9-277b-4c64-9c07-9a3a914299f8.jpeg           UUID              id_photo, electricity_bill, lease      0.82
+   41  d51172a4-2e15-428c-bcc6-ac669a3b0eeb.jpeg           UUID              id_photo, electricity_bill, lease      0.82
+   42  3e9f5856-6d03-4ca3-89dc-590f7f64def6.jpeg           UUID              id_photo, electricity_bill, lease      0.82
+   43  WhatsApp Image 2026-05-31 at 08.15.34.jpeg          WhatsApp_Image    id_photo, electricity_bill, lease      0.92
+   44  photo_5251426736270941603_w.jpg                     Other             id_photo, electricity_bill, lease      0.80
+   45  WhatsApp Image 2026-05-31 at 08.15.35.jpeg          WhatsApp_Image    id_photo, electricity_bill, lease      0.92
+   46  WhatsApp Image 2026-05-31 at 09.05.59.jpeg          WhatsApp_Image    id_photo, electricity_bill, lease      0.92
+   47  photo_5828141647559069988_y.jpg                     Other             id_photo, electricity_bill, lease      0.80
+   48  photo_5828141647559069987_y.jpg                     Other             id_photo, electricity_bill, lease      0.80
+   49  photo_5828141647559069986_y.jpg                     Other             id_photo, electricity_bill, lease      0.80
+   50  ╫ù╫⌐╫₧╫£ ╫₧╫Ö╫ô╫ÿ╫É╫ò╫ƒ.jpeg                                   Other             electricity_bill, id_photo, lease      0.80
+   51  ╫¬╫ó╫ò╫ô╫¬ ╫û╫ö╫ò╫¬ ╫⌐╫Ö╫¿╫£╫Ö ╫₧╫Ö╫ô╫ÿ╫É╫ò╫ƒ.jpeg                       Other             electricity_bill, id_photo, lease      0.80
+   52  ╫ù╫ò╫û╫ö ╫⌐╫¢╫Ö╫¿╫ò╫¬╫₧╫Ö╫ô╫ÿ╫É╫ò╫ƒ.jpeg                             Other             electricity_bill, id_photo, lease      0.80
+   53  IMG-20260326-WA0005.jpg                             Other             id_photo, lease_contract               0.80
+   54  Screenshot_20260428_133908_Gallery.jpg              Screenshot        id_photo, lease_contract               0.87
+   55  Screenshot_20260428_133905_Gallery.jpg              Screenshot        id_photo, lease_contract               0.87
+   56  IMG-20260531-WA0011.jpg                             Other             id_photo, lease_contract               0.80
+   57  Screenshot_20260531_112832_Samsung Notes.jpg        Screenshot        id_photo, lease_contract               0.87
+   58  Screenshot_20260531_112832_Samsung Notes_731.jpg    Screenshot        id_photo, lease_contract               0.87
+   59  Screenshot_20260531_112900_Samsung Notes.jpg        Screenshot        id_photo, lease_contract               0.87
+   60  Screenshot_20260531_112914_Samsung Notes.jpg        Screenshot        id_photo, lease_contract               0.87
+   61  Screenshot_20260531_112917_Samsung Notes.jpg        Screenshot        id_photo, lease_contract               0.87
+   62  Screenshot_20260531_112924_Samsung Notes.jpg        Screenshot        id_photo, lease_contract               0.87
+   63  Screenshot_20260531_112910_Samsung Notes.jpg        Screenshot        id_photo, lease_contract               0.87
+   64  Screenshot_20260531_112920_Samsung Notes.jpg        Screenshot        id_photo, lease_contract               0.87
+   65  Screenshot_20260531_112928_Samsung Notes.jpg        Screenshot        id_photo, lease_contract               0.87
+   66  Screenshot_20260531_101216_WhatsApp.jpg             WhatsApp_Image    electricity_meter, gas_meter, wat      0.92
+   67  Screenshot_20260531_101212_WhatsApp.jpg             WhatsApp_Image    electricity_meter, gas_meter, wat      0.92
+   68  Screenshot_20260531_101229_WhatsApp.jpg             WhatsApp_Image    electricity_meter, gas_meter, wat      0.92
+   69  Screenshot_20260531_101207_WhatsApp.jpg             WhatsApp_Image    electricity_meter, gas_meter, wat      0.92
+
+================================================================================
+CANDIDATE DOCUMENT TYPE FREQUENCY (from checklist)
+================================================================================
+  lease_contract              :  62  ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+  id_photo                    :  37  ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+  water_meter                 :  32  ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+  electricity_meter           :  28  ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+  electricity_bill            :  27  ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+  water_bill                  :  24  ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+  arnona_bill                 :  22  ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+  gas_meter                   :   6  ΓûêΓûêΓûêΓûêΓûêΓûê
+  tabu_document               :   2  ΓûêΓûê
+  gas_bill                    :   1  Γûê
+
+================================================================================
+AI RECOVERY ESTIMATE
+================================================================================
+  Unresolved files:            69
+  AI-recoverable (estimated):  69 / 69
+  Average AI confidence:       0.86
+  Optimistic recovery:         69 files (100.0%)
+  Conservative recovery (70%): 48 files (69.6%)
+
+  Data written to scratch/phase10b_unresolved.json (69 records)

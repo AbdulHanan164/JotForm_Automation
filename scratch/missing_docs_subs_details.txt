@@ -1,0 +1,232 @@
+=== SUBMISSIONS INVENTORY (Count: 20) ===
+
+--- Submission 1: 6574271317125403787 (2026-06-16 09:52:17) ---
+  QID: 2 | Name: 'input2' | Text: 'שלח מסמכים' | Value: None
+  QID: 19 | Name: 'input19' | Text: 'השלמה וצירוף מסמכים' | Value: None
+  QID: 20 | Name: 'input20' | Text: 'שם משפחה' | Value: None
+  QID: 21 | Name: 'input21' | Text: 'שם' | Value: אריק
+  QID: 22 | Name: 'Text' | Text: 'שם TEXT' | Value: None
+  QID: 23 | Name: 'input23' | Text: 'שם משפחה TEXT' | Value: None
+  QID: 24 | Name: 'input24' | Text: 'שם חברה' | Value: None
+  QID: 25 | Name: 'input25' | Text: 'שם חברה TEXT' | Value: None
+  QID: 28 | Name: 'input28' | Text: 'שם נציג' | Value: None
+  QID: 29 | Name: 'input29' | Text: 'שם נציג TEXT' | Value: None
+  QID: 30 | Name: 'input301' | Text: 'דואר אלקטרוני' | Value: arikshemesh1616@gmail.commmm
+  QID: 31 | Name: 'input31' | Text: 'דואר אלקטרוני לקוח TEXT' | Value: None
+  QID: 32 | Name: 'input321' | Text: '.מס' ת"ז/ח.פ' | Value: 039541446
+  QID: 37 | Name: 'input37' | Text: 'לצלם' | Value: None
+  QID: 38 | Name: 'input38' | Text: 'להעלות צילום - ניתן לצרף מספר מסמכים בו זמנית' | Value: ['https://www.jotform.com/uploads/Alechko2/251323124205946/6574271317125403787/WhatsApp_Image_2026-06-16_at_16.29.27.jpeg', 'https://www.jotform.com/uploads/Alechko2/251323124205946/6574271317125403787/WhatsApp_Image_2026-06-16_at_16.29.02.jpeg', 'https://www.jotform.com/uploads/Alechko2/251323124205946/6574271317125403787/WhatsApp_Image_2026-06-16_at_16.31.10.jpeg', 'https://www.jotform.com/uploads/Alechko2/251323124205946/6574271317125403787/WhatsApp_Image_2026-06-16_at_16.51.28.jpeg']
+  QID: 39 | Name: 'input39' | Text: 'מס' ח.פ' | Value: None
+  QID: 76 | Name: 'input76' | Text: 'אני מבין שהספח לא ברשותך כעת, זה בסדר, אפשר לדלג לשלב הבא.אנו נשלח לך הודעת דוא"...' | Value: None
+  QID: 77 | Name: 'ltpStyletextalign' | Text: 'אני מבין שפרוטוקול מורשי החתימה לא ברשותך כעת, זה בסדר, אפשר לדלג לשלב הבא.אנו נ...' | Value: None
+  QID: 113 | Name: 'ltpStyletextalign113' | Text: 'מה כתובת הנכס?' | Value: None
+  QID: 114 | Name: 'input114' | Text: 'שם הישוב' | Value: None
+  QID: 115 | Name: 'input115' | Text: 'מספר דירה' | Value: None
+  QID: 116 | Name: 'input116' | Text: 'מספר בית' | Value: None
+  QID: 117 | Name: 'input117' | Text: 'קומה' | Value: None
+  QID: 118 | Name: 'input118' | Text: 'שם הרחוב' | Value: None
+  QID: 119 | Name: 'input119' | Text: 'כניסה' | Value: None
+  QID: 121 | Name: '5' | Text: 'שלב 5 מ 7' | Value: None
+  QID: 171 | Name: 'ltpStyletextalign171' | Text: 'אין לך אפשרות לצלם את מונה המים? אפשר לדלג לשלב הבא. נשלח לך דוא"ל ובו ניתן להשל...' | Value: None
+  QID: 179 | Name: '6' | Text: 'שלב 6 מ 7' | Value: None
+  QID: 180 | Name: 'input180' | Text: 'אני מאשר/ת לחברת מה זה קל בע"מ להגיש ולטפל בשמי בבקשה לשינוי צרכנים/מחזיקים בנכס...' | Value: None
+  QID: 183 | Name: '7' | Text: 'שלב 7' | Value: None
+  QID: 184 | Name: 'uniqueId' | Text: 'unique id' | Value: MZK5207
+  QID: 185 | Name: 'typeA' | Text: 'Get Page URL' | Value: https://mazekal.co.il/%d7%94%d7%a9%d7%9c%d7%9e%d7%aa-%d7%9e%d7%a1%d7%9e%d7%9b%d7%99%d7%9d/?input21={input287}&input321={input32}&input2081={input208}&input324={input3}&input324={input7}&input324={input6}&input301={input30}
+  QID: 190 | Name: 'myEmail' | Text: 'My email' | Value: info@mazekal.co.il
+  QID: 191 | Name: 'sendersName' | Text: 'senders Name' | Value: מה זה קל - העברת חשבונות
+  QID: 192 | Name: 'business' | Text: 'Business' | Value: Mazekal
+  QID: 193 | Name: 'moveType' | Text: 'move type' | Value: None
+  QID: 208 | Name: 'input2081' | Text: 'מס טלפון נייד' | Value: 0544485914
+  QID: 255 | Name: 'date' | Text: 'Date' | Value: {'month': '06', 'day': '16', 'year': '2026', 'datetime': '2026-06-16 00:00:00'}
+  QID: 258 | Name: 'input258' | Text: '?לאן לשלוח את החשבונית ודיוורים נוספים' | Value: None
+  QID: 262 | Name: 'moveType262' | Text: 'main user full name' | Value: None
+  QID: 291 | Name: 'uniqueId291' | Text: 'unique id TEXT' | Value: None
+  QID: 297 | Name: 'input297' | Text: 'תאריך המעבר' | Value: None
+  QID: 303 | Name: 'input303' | Text: 'לא ניתן לשלם בכרטיס דיירקט, דביט או נטען' | Value: None
+  QID: 308 | Name: 'termsAnd' | Text: 'Terms and Conditions' | Value: None
+  QID: 309 | Name: 'termsAnd309' | Text: 'Terms and Conditions' | Value: הוסכם
+  QID: 311 | Name: 'input311' | Text: '?איזה מסמכים תרצה לצרף' | Value: None
+  QID: 312 | Name: 'ltpStyletextalign312' | Text: '👉הסבר השלמת מסמכים 👈
+שכירות
+- 🪪 צילום ת.ז הצדדים בחוזה (כל שוכרים והמשכיר)
+- ...' | Value: None
+  QID: 313 | Name: 'termsAnd313' | Text: 'Terms and Conditions' | Value: הוסכם
+  QID: 314 | Name: 'ltpStyletextalign314' | Text: 'ניתן להעולת את כל הקבצים יחד.במידה ואתם מצלמים מסמכים יש לצלם אחד אחד' | Value: None
+  QID: 315 | Name: 'input315' | Text: 'איך תרצו לצרף מסמכים' | Value: להעלות קובץ/ים
+  QID: 316 | Name: 'ltpStyletextalign316' | Text: 'מייל להשלמת מסמכים docs@mazekal.co.ilיש לרשום את שמך וכתובת הנכס במנושא המייללדו...' | Value: None
+  QID: 317 | Name: 'input317' | Text: '?שוכר יוצא - איזה מסמכים תרצה לצרף' | Value: ['צילום תז שלי', 'צילום מונה מים', 'צילום תז משכיר/בעל בית', 'צילום חשבון ארנונה', 'צילום חוזה שכירות שנגמר - מלא וחתום']
+  QID: 318 | Name: 'input318' | Text: '?שוכר נכנס - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 320 | Name: 'input320' | Text: '?קונה - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 321 | Name: 'input321' | Text: '?מוכר - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 322 | Name: 'input322' | Text: '? בעלים חוזר - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 323 | Name: 'input323' | Text: '?תאגיד - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 324 | Name: 'input324' | Text: 'אני' | Value: מסיים שכירות
+  QID: 326 | Name: 'ltpStyletextalign326' | Text: '👉הסבר השלמת מסמכים 👈
+ תאגיד/חברה
+-📜תעודת התאגדות
+-📃פרוטוקול מורשה חתימה (רק ל...' | Value: None
+  QID: 327 | Name: 'ltpStyletextalign327' | Text: '👉הסבר השלמת מסמכים 👈
+ קניה/מכירה/ירושה
+- 🪪 צילום ת.ז - הצדדים בחוזה (כל הקונים...' | Value: None
+  QID: 328 | Name: 'ltpStyletextalign328' | Text: '👉הסבר השלמת מסמכים 👈
+בעלים חוזר לנכס - שכירות
+- 🪪 צילום ת.ז הצדדים בחוזה (השוכ...' | Value: None
+  QID: 329 | Name: 'input329' | Text: 'לצלם' | Value: None
+  QID: 330 | Name: 'input330' | Text: 'לצלם' | Value: None
+  QID: 331 | Name: 'input331' | Text: 'לצלם' | Value: None
+  QID: 332 | Name: 'input332' | Text: 'הערות' | Value: אם יש בעיה ניתן לדבר איתי בטלפון 0544485914
+
+--- Submission 2: 6573577625768407601 (2026-06-15 14:36:06) ---
+  QID: 2 | Name: 'input2' | Text: 'שלח מסמכים' | Value: None
+  QID: 19 | Name: 'input19' | Text: 'השלמה וצירוף מסמכים' | Value: None
+  QID: 20 | Name: 'input20' | Text: 'שם משפחה' | Value: None
+  QID: 21 | Name: 'input21' | Text: 'שם' | Value: נטליה חתונצב
+  QID: 22 | Name: 'Text' | Text: 'שם TEXT' | Value: None
+  QID: 23 | Name: 'input23' | Text: 'שם משפחה TEXT' | Value: None
+  QID: 24 | Name: 'input24' | Text: 'שם חברה' | Value: None
+  QID: 25 | Name: 'input25' | Text: 'שם חברה TEXT' | Value: None
+  QID: 28 | Name: 'input28' | Text: 'שם נציג' | Value: None
+  QID: 29 | Name: 'input29' | Text: 'שם נציג TEXT' | Value: None
+  QID: 30 | Name: 'input301' | Text: 'דואר אלקטרוני' | Value: natalia.hatuntzev@gmail.com
+  QID: 31 | Name: 'input31' | Text: 'דואר אלקטרוני לקוח TEXT' | Value: None
+  QID: 32 | Name: 'input321' | Text: '.מס' ת"ז/ח.פ' | Value: 321002032
+  QID: 37 | Name: 'input37' | Text: 'לצלם' | Value: None
+  QID: 38 | Name: 'input38' | Text: 'להעלות צילום - ניתן לצרף מספר מסמכים בו זמנית' | Value: ['https://www.jotform.com/uploads/Alechko2/251323124205946/6573577625768407601/נטליה_חתום_הסכם_שכירות_2026_אלנבי_166.pdf', 'https://www.jotform.com/uploads/Alechko2/251323124205946/6573577625768407601/WhatsApp_Image_2026-06-10_at_13.18.46.jpeg', 'https://www.jotform.com/uploads/Alechko2/251323124205946/6573577625768407601/WhatsApp_Image_2026-06-10_at_13.18.46_28129.jpeg']
+  QID: 39 | Name: 'input39' | Text: 'מס' ח.פ' | Value: None
+  QID: 76 | Name: 'input76' | Text: 'אני מבין שהספח לא ברשותך כעת, זה בסדר, אפשר לדלג לשלב הבא.אנו נשלח לך הודעת דוא"...' | Value: None
+  QID: 77 | Name: 'ltpStyletextalign' | Text: 'אני מבין שפרוטוקול מורשי החתימה לא ברשותך כעת, זה בסדר, אפשר לדלג לשלב הבא.אנו נ...' | Value: None
+  QID: 113 | Name: 'ltpStyletextalign113' | Text: 'מה כתובת הנכס?' | Value: None
+  QID: 114 | Name: 'input114' | Text: 'שם הישוב' | Value: None
+  QID: 115 | Name: 'input115' | Text: 'מספר דירה' | Value: None
+  QID: 116 | Name: 'input116' | Text: 'מספר בית' | Value: None
+  QID: 117 | Name: 'input117' | Text: 'קומה' | Value: None
+  QID: 118 | Name: 'input118' | Text: 'שם הרחוב' | Value: None
+  QID: 119 | Name: 'input119' | Text: 'כניסה' | Value: None
+  QID: 121 | Name: '5' | Text: 'שלב 5 מ 7' | Value: None
+  QID: 171 | Name: 'ltpStyletextalign171' | Text: 'אין לך אפשרות לצלם את מונה המים? אפשר לדלג לשלב הבא. נשלח לך דוא"ל ובו ניתן להשל...' | Value: None
+  QID: 179 | Name: '6' | Text: 'שלב 6 מ 7' | Value: None
+  QID: 180 | Name: 'input180' | Text: 'אני מאשר/ת לחברת מה זה קל בע"מ להגיש ולטפל בשמי בבקשה לשינוי צרכנים/מחזיקים בנכס...' | Value: None
+  QID: 183 | Name: '7' | Text: 'שלב 7' | Value: None
+  QID: 184 | Name: 'uniqueId' | Text: 'unique id' | Value: MZK5206
+  QID: 185 | Name: 'typeA' | Text: 'Get Page URL' | Value: https://mazekal.co.il/%d7%94%d7%a9%d7%9c%d7%9e%d7%aa-%d7%9e%d7%a1%d7%9e%d7%9b%d7%99%d7%9d/?input21={input287}&input321={input32}&input2081={input208}&input324={input3}&input324={input7}&input324={input6}&input301={input30}
+  QID: 190 | Name: 'myEmail' | Text: 'My email' | Value: info@mazekal.co.il
+  QID: 191 | Name: 'sendersName' | Text: 'senders Name' | Value: מה זה קל - העברת חשבונות
+  QID: 192 | Name: 'business' | Text: 'Business' | Value: Mazekal
+  QID: 193 | Name: 'moveType' | Text: 'move type' | Value: None
+  QID: 208 | Name: 'input2081' | Text: 'מס טלפון נייד' | Value: 0549845611
+  QID: 255 | Name: 'date' | Text: 'Date' | Value: {'month': '06', 'day': '15', 'year': '2026', 'datetime': '2026-06-15 00:00:00'}
+  QID: 258 | Name: 'input258' | Text: '?לאן לשלוח את החשבונית ודיוורים נוספים' | Value: None
+  QID: 262 | Name: 'moveType262' | Text: 'main user full name' | Value: None
+  QID: 291 | Name: 'uniqueId291' | Text: 'unique id TEXT' | Value: None
+  QID: 297 | Name: 'input297' | Text: 'תאריך המעבר' | Value: None
+  QID: 303 | Name: 'input303' | Text: 'לא ניתן לשלם בכרטיס דיירקט, דביט או נטען' | Value: None
+  QID: 308 | Name: 'termsAnd' | Text: 'Terms and Conditions' | Value: None
+  QID: 309 | Name: 'termsAnd309' | Text: 'Terms and Conditions' | Value: הוסכם
+  QID: 311 | Name: 'input311' | Text: '?איזה מסמכים תרצה לצרף' | Value: None
+  QID: 312 | Name: 'ltpStyletextalign312' | Text: '👉הסבר השלמת מסמכים 👈
+שכירות
+- 🪪 צילום ת.ז הצדדים בחוזה (כל שוכרים והמשכיר)
+- ...' | Value: None
+  QID: 313 | Name: 'termsAnd313' | Text: 'Terms and Conditions' | Value: הוסכם
+  QID: 314 | Name: 'ltpStyletextalign314' | Text: 'ניתן להעולת את כל הקבצים יחד.במידה ואתם מצלמים מסמכים יש לצלם אחד אחד' | Value: None
+  QID: 315 | Name: 'input315' | Text: 'איך תרצו לצרף מסמכים' | Value: להעלות קובץ/ים
+  QID: 316 | Name: 'ltpStyletextalign316' | Text: 'מייל להשלמת מסמכים docs@mazekal.co.ilיש לרשום את שמך וכתובת הנכס במנושא המייללדו...' | Value: None
+  QID: 317 | Name: 'input317' | Text: '?שוכר יוצא - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 318 | Name: 'input318' | Text: '?שוכר נכנס - איזה מסמכים תרצה לצרף' | Value: ['צילום מונה חשמל', 'צילום מונה מים', 'צילום חוזה שכירות - מלא וחתום']
+  QID: 320 | Name: 'input320' | Text: '?קונה - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 321 | Name: 'input321' | Text: '?מוכר - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 322 | Name: 'input322' | Text: '? בעלים חוזר - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 323 | Name: 'input323' | Text: '?תאגיד - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 324 | Name: 'input324' | Text: 'אני' | Value: מתחיל שכירות
+  QID: 326 | Name: 'ltpStyletextalign326' | Text: '👉הסבר השלמת מסמכים 👈
+ תאגיד/חברה
+-📜תעודת התאגדות
+-📃פרוטוקול מורשה חתימה (רק ל...' | Value: None
+  QID: 327 | Name: 'ltpStyletextalign327' | Text: '👉הסבר השלמת מסמכים 👈
+ קניה/מכירה/ירושה
+- 🪪 צילום ת.ז - הצדדים בחוזה (כל הקונים...' | Value: None
+  QID: 328 | Name: 'ltpStyletextalign328' | Text: '👉הסבר השלמת מסמכים 👈
+בעלים חוזר לנכס - שכירות
+- 🪪 צילום ת.ז הצדדים בחוזה (השוכ...' | Value: None
+  QID: 329 | Name: 'input329' | Text: 'לצלם' | Value: None
+  QID: 330 | Name: 'input330' | Text: 'לצלם' | Value: None
+  QID: 331 | Name: 'input331' | Text: 'לצלם' | Value: None
+  QID: 332 | Name: 'input332' | Text: 'הערות' | Value: None
+
+--- Submission 3: 6573196609414366217 (2026-06-15 04:01:02) ---
+  QID: 2 | Name: 'input2' | Text: 'שלח מסמכים' | Value: None
+  QID: 19 | Name: 'input19' | Text: 'השלמה וצירוף מסמכים' | Value: None
+  QID: 20 | Name: 'input20' | Text: 'שם משפחה' | Value: None
+  QID: 21 | Name: 'input21' | Text: 'שם' | Value: אלי משה נבו
+  QID: 22 | Name: 'Text' | Text: 'שם TEXT' | Value: None
+  QID: 23 | Name: 'input23' | Text: 'שם משפחה TEXT' | Value: None
+  QID: 24 | Name: 'input24' | Text: 'שם חברה' | Value: None
+  QID: 25 | Name: 'input25' | Text: 'שם חברה TEXT' | Value: None
+  QID: 28 | Name: 'input28' | Text: 'שם נציג' | Value: None
+  QID: 29 | Name: 'input29' | Text: 'שם נציג TEXT' | Value: None
+  QID: 30 | Name: 'input301' | Text: 'דואר אלקטרוני' | Value: nevosan123@walla.com
+  QID: 31 | Name: 'input31' | Text: 'דואר אלקטרוני לקוח TEXT' | Value: None
+  QID: 32 | Name: 'input321' | Text: '.מס' ת"ז/ח.פ' | Value: 301264438
+  QID: 37 | Name: 'input37' | Text: 'לצלם' | Value: None
+  QID: 38 | Name: 'input38' | Text: 'להעלות צילום - ניתן לצרף מספר מסמכים בו זמנית' | Value: ['https://www.jotform.com/uploads/Alechko2/251323124205946/6573196609414366217/צילום_חשבון_גז.pdf']
+  QID: 39 | Name: 'input39' | Text: 'מס' ח.פ' | Value: None
+  QID: 76 | Name: 'input76' | Text: 'אני מבין שהספח לא ברשותך כעת, זה בסדר, אפשר לדלג לשלב הבא.אנו נשלח לך הודעת דוא"...' | Value: None
+  QID: 77 | Name: 'ltpStyletextalign' | Text: 'אני מבין שפרוטוקול מורשי החתימה לא ברשותך כעת, זה בסדר, אפשר לדלג לשלב הבא.אנו נ...' | Value: None
+  QID: 113 | Name: 'ltpStyletextalign113' | Text: 'מה כתובת הנכס?' | Value: None
+  QID: 114 | Name: 'input114' | Text: 'שם הישוב' | Value: None
+  QID: 115 | Name: 'input115' | Text: 'מספר דירה' | Value: None
+  QID: 116 | Name: 'input116' | Text: 'מספר בית' | Value: None
+  QID: 117 | Name: 'input117' | Text: 'קומה' | Value: None
+  QID: 118 | Name: 'input118' | Text: 'שם הרחוב' | Value: None
+  QID: 119 | Name: 'input119' | Text: 'כניסה' | Value: None
+  QID: 121 | Name: '5' | Text: 'שלב 5 מ 7' | Value: None
+  QID: 171 | Name: 'ltpStyletextalign171' | Text: 'אין לך אפשרות לצלם את מונה המים? אפשר לדלג לשלב הבא. נשלח לך דוא"ל ובו ניתן להשל...' | Value: None
+  QID: 179 | Name: '6' | Text: 'שלב 6 מ 7' | Value: None
+  QID: 180 | Name: 'input180' | Text: 'אני מאשר/ת לחברת מה זה קל בע"מ להגיש ולטפל בשמי בבקשה לשינוי צרכנים/מחזיקים בנכס...' | Value: None
+  QID: 183 | Name: '7' | Text: 'שלב 7' | Value: None
+  QID: 184 | Name: 'uniqueId' | Text: 'unique id' | Value: MZK5205
+  QID: 185 | Name: 'typeA' | Text: 'Get Page URL' | Value: https://mazekal.co.il/%d7%94%d7%a9%d7%9c%d7%9e%d7%aa-%d7%9e%d7%a1%d7%9e%d7%9b%d7%99%d7%9d/?input21={input287}&input321={input32}&input2081={input208}&input324={input3}&input324={input7}&input324={input6}&input301={input30}
+  QID: 190 | Name: 'myEmail' | Text: 'My email' | Value: info@mazekal.co.il
+  QID: 191 | Name: 'sendersName' | Text: 'senders Name' | Value: מה זה קל - העברת חשבונות
+  QID: 192 | Name: 'business' | Text: 'Business' | Value: Mazekal
+  QID: 193 | Name: 'moveType' | Text: 'move type' | Value: None
+  QID: 208 | Name: 'input2081' | Text: 'מס טלפון נייד' | Value: 0508289544
+  QID: 255 | Name: 'date' | Text: 'Date' | Value: {'month': '06', 'day': '15', 'year': '2026', 'datetime': '2026-06-15 00:00:00'}
+  QID: 258 | Name: 'input258' | Text: '?לאן לשלוח את החשבונית ודיוורים נוספים' | Value: None
+  QID: 262 | Name: 'moveType262' | Text: 'main user full name' | Value: None
+  QID: 291 | Name: 'uniqueId291' | Text: 'unique id TEXT' | Value: None
+  QID: 297 | Name: 'input297' | Text: 'תאריך המעבר' | Value: None
+  QID: 303 | Name: 'input303' | Text: 'לא ניתן לשלם בכרטיס דיירקט, דביט או נטען' | Value: None
+  QID: 308 | Name: 'termsAnd' | Text: 'Terms and Conditions' | Value: None
+  QID: 309 | Name: 'termsAnd309' | Text: 'Terms and Conditions' | Value: הוסכם
+  QID: 311 | Name: 'input311' | Text: '?איזה מסמכים תרצה לצרף' | Value: None
+  QID: 312 | Name: 'ltpStyletextalign312' | Text: '👉הסבר השלמת מסמכים 👈
+שכירות
+- 🪪 צילום ת.ז הצדדים בחוזה (כל שוכרים והמשכיר)
+- ...' | Value: None
+  QID: 313 | Name: 'termsAnd313' | Text: 'Terms and Conditions' | Value: הוסכם
+  QID: 314 | Name: 'ltpStyletextalign314' | Text: 'ניתן להעולת את כל הקבצים יחד.במידה ואתם מצלמים מסמכים יש לצלם אחד אחד' | Value: None
+  QID: 315 | Name: 'input315' | Text: 'איך תרצו לצרף מסמכים' | Value: להעלות קובץ/ים
+  QID: 316 | Name: 'ltpStyletextalign316' | Text: 'מייל להשלמת מסמכים docs@mazekal.co.ilיש לרשום את שמך וכתובת הנכס במנושא המייללדו...' | Value: None
+  QID: 317 | Name: 'input317' | Text: '?שוכר יוצא - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 318 | Name: 'input318' | Text: '?שוכר נכנס - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 320 | Name: 'input320' | Text: '?קונה - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 321 | Name: 'input321' | Text: '?מוכר - איזה מסמכים תרצה לצרף' | Value: ['צילום חשבון גז']
+  QID: 322 | Name: 'input322' | Text: '? בעלים חוזר - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 323 | Name: 'input323' | Text: '?תאגיד - איזה מסמכים תרצה לצרף' | Value: None
+  QID: 324 | Name: 'input324' | Text: 'אני' | Value: מוכר
+  QID: 326 | Name: 'ltpStyletextalign326' | Text: '👉הסבר השלמת מסמכים 👈
+ תאגיד/חברה
+-📜תעודת התאגדות
+-📃פרוטוקול מורשה חתימה (רק ל...' | Value: None
+  QID: 327 | Name: 'ltpStyletextalign327' | Text: '👉הסבר השלמת מסמכים 👈
+ קניה/מכירה/ירושה
+- 🪪 צילום ת.ז - הצדדים בחוזה (כל הקונים...' | Value: None
+  QID: 328 | Name: 'ltpStyletextalign328' | Text: '👉הסבר השלמת מסמכים 👈
+בעלים חוזר לנכס - שכירות
+- 🪪 צילום ת.ז הצדדים בחוזה (השוכ...' | Value: None
+  QID: 329 | Name: 'input329' | Text: 'לצלם' | Value: None
+  QID: 330 | Name: 'input330' | Text: 'לצלם' | Value: None
+  QID: 331 | Name: 'input331' | Text: 'לצלם' | Value: None
+  QID: 332 | Name: 'input332' | Text: 'הערות' | Value: None

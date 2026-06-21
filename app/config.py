@@ -53,7 +53,11 @@ class Settings(BaseSettings):
     # Path to service account credentials JSON file
     google_sheets_credentials_path: str = ""
 
-    # ── AI / OCR (not used in v0.6) ───────────────────────────────────────────
+    # ── AI / OCR ─────────────────────────────────────────────────────────────
+    # gemini_api_key  — Gemini Flash Vision document classifier (Phase 10C+).
+    #   Get from: https://aistudio.google.com/app/apikey
+    #   Set GEMINI_API_KEY in .env
+    gemini_api_key:  str = ""
     openai_api_key:  str = ""
     nvidia_api_key:  str = ""
 

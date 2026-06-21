@@ -1,0 +1,1062 @@
+[
+  {
+    "file": "WhatsApp_Image_2026-06-16_at_16.29.27.jpeg",
+    "submission": "אריק שמש",
+    "missing_id": "6574271317125403787",
+    "checklist": [
+      "צילום תז שלי",
+      "צילום מונה מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות שנגמר - מלא וחתום"
+    ],
+    "gemini_type": "water_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a water meter with a digital display, typical of a water meter reading.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:35:00.899822+00:00"
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-16_at_16.29.02.jpeg",
+    "submission": "אריק שמש",
+    "missing_id": "6574271317125403787",
+    "checklist": [
+      "צילום תז שלי",
+      "צילום מונה מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות שנגמר - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows an Israeli identity card with recognizable features such as the national emblem and personal details.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:35:09.894355+00:00"
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-16_at_16.31.10.jpeg",
+    "submission": "אריק שמש",
+    "missing_id": "6574271317125403787",
+    "checklist": [
+      "צילום תז שלי",
+      "צילום מונה מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות שנגמר - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpbopo4_3z.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-16_at_16.51.28.jpeg",
+    "submission": "אריק שמש",
+    "missing_id": "6574271317125403787",
+    "checklist": [
+      "צילום תז שלי",
+      "צילום מונה מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות שנגמר - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpmswlwhe7.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-10_at_13.18.46.jpeg",
+    "submission": "נטליה חתונצב",
+    "missing_id": "6573577625768407601",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "electricity_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a meter with a kWh reading and components typical of an electricity meter.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:35:35.602118+00:00"
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-10_at_13.18.46_28129.jpeg",
+    "submission": "נטליה חתונצב",
+    "missing_id": "6573577625768407601",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "water_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a digital display with meter readings and the word 'ARAD,' indicating it is a water meter.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:35:44.105112+00:00"
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-03_at_17.42.19_28329.jpeg",
+    "submission": "ליאת הניג בליצבלאו",
+    "missing_id": "6572688775303926395",
+    "checklist": [
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmp23rqzli8.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-03_at_17.42.19_28229.jpeg",
+    "submission": "ליאת הניג בליצבלאו",
+    "missing_id": "6572688775303926395",
+    "checklist": [
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmplw47pkna.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-03_at_17.42.19_28429.jpeg",
+    "submission": "ליאת הניג בליצבלאו",
+    "missing_id": "6572688775303926395",
+    "checklist": [
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpm09y5b8g.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-03_at_17.42.19_28129.jpeg",
+    "submission": "ליאת הניג בליצבלאו",
+    "missing_id": "6572688775303926395",
+    "checklist": [
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmp6x7tt_d8.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-03_at_17.42.19_28529.jpeg",
+    "submission": "ליאת הניג בליצבלאו",
+    "missing_id": "6572688775303926395",
+    "checklist": [
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains sections titled 'הסכם בעל פה' (Oral Agreement) and 'יתור על הפרה' (Waiver of Breach), and discusses terms related to a 'שוכר' (tenant) and 'משכיר' (landlord), which are key indicators of a lease contract.",
+    "model": "gemini-2.5-flash",
+    "classified_at": "2026-06-21T20:36:23.322263+00:00"
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-03_at_17.42.19.jpeg",
+    "submission": "ליאת הניג בליצבלאו",
+    "missing_id": "6572688775303926395",
+    "checklist": [
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains structured text typical of a rental agreement, including terms and parties involved, and the header indicates it is a lease agreement.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:36:32.159560+00:00"
+  },
+  {
+    "file": "WhatsApp_Image_2026-06-03_at_17.42.19_28629.jpeg",
+    "submission": "ליאת הניג בליצבלאו",
+    "missing_id": "6572688775303926395",
+    "checklist": [
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpe3aupjau.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "8def5d98-f521-4526-af4e-d6818c8155ad.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the structure and elements of an Israeli identity card, including the emblem and personal details.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:36:47.892154+00:00"
+  },
+  {
+    "file": "c99f90a1-012f-483b-b396-566261754e7f.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the structure and elements typical of an Israeli identity card, including a photo, personal details, and official emblems.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:36:56.012890+00:00"
+  },
+  {
+    "file": "IMG_8350.png",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "electricity_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a digital display with a kWh reading and branding related to electricity, indicating it is an electricity meter.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:37:16.463613+00:00"
+  },
+  {
+    "file": "IMG_8325.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "water_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a water meter with dials and a reading, typical of a water meter photograph.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:37:31.544597+00:00"
+  },
+  {
+    "file": "IMG_8315.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpms28qb7h.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "IMG_8317.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpfrvy5084.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "IMG_8316.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains structured text typical of a rental agreement, including terms and signatures.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:38:15.101177+00:00"
+  },
+  {
+    "file": "IMG_8318.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmp8qq7ugb6.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "IMG_8320.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmp23_qjpqj.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "IMG_8319.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpqa69l_bl.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "IMG_8321.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpf_w9k5p7.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "IMG_8322.jpeg",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpz_qmmw6w.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "IMG_8355.png",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "arnona_bill",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the word 'ארנונה' and is structured like a municipal property tax bill.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:39:43.714603+00:00"
+  },
+  {
+    "file": "IMG_8354.png",
+    "submission": "אזמט אוסמונוב",
+    "missing_id": "6569852209518748333",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה מים",
+      "צילום חשבון חשמל",
+      "צילום חשבון מים",
+      "צילום חשבון ארנונה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "arnona_bill",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the header 'ארנונה' and details typical of a municipal property tax bill.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:39:57.343270+00:00"
+  },
+  {
+    "file": "crft.png",
+    "submission": "יורי פולבוי",
+    "missing_id": "6562335640111332794",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום ספח שלי",
+      "צילום מונה מים",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows an Israeli identity card with recognizable features such as a photo, Hebrew text, and a chip.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:40:10.601838+00:00"
+  },
+  {
+    "file": "Скан_20260602 (2).png",
+    "submission": "יורי פולבוי",
+    "missing_id": "6562335640111332794",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום ספח שלי",
+      "צילום מונה מים",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document is an Israeli identity card with recognizable features such as the Israeli flag and Hebrew text.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:40:20.741195+00:00"
+  },
+  {
+    "file": "IMG20260601171301.jpg",
+    "submission": "יורי פולבוי",
+    "missing_id": "6562335640111332794",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום ספח שלי",
+      "צילום מונה מים",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "electricity_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a digital display with a kWh reading, typical of an electricity meter.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:40:28.464159+00:00"
+  },
+  {
+    "file": "pending-1780919657-IMG20260601145417.jpg",
+    "submission": "יורי פולבוי",
+    "missing_id": "6562335640111332794",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום ספח שלי",
+      "צילום מונה מים",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "water_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a water meter with a digital reading and brand markings typical of water meters.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:40:36.346992+00:00"
+  },
+  {
+    "file": "тз.pdf",
+    "submission": "יורי פולבוי",
+    "missing_id": "6562335640111332794",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום ספח שלי",
+      "צילום מונה מים",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpvorgn5bh.pdf'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "дог.pdf",
+    "submission": "יורי פולבוי",
+    "missing_id": "6562335640111332794",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום ספח שלי",
+      "צילום מונה מים",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmp7vlh05tf.pdf'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "лрг.pdf",
+    "submission": "יורי פולבוי",
+    "missing_id": "6562335640111332794",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום ספח שלי",
+      "צילום מונה מים",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmp8xyryt2j.pdf'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "d8fcbee9-277b-4c64-9c07-9a3a914299f8.jpeg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains Hebrew text related to rental agreements, including terms like 'הסכם' and 'שכירות', and has signature lines typical of contracts.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:40:59.291985+00:00"
+  },
+  {
+    "file": "d51172a4-2e15-428c-bcc6-ac669a3b0eeb.jpeg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains sections and terminology typical of a rental/lease agreement, such as terms of lease and payment methods.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:41:07.683208+00:00"
+  },
+  {
+    "file": "3e9f5856-6d03-4ca3-89dc-590f7f64def6.jpeg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the header 'הסכם שכירות בלתי מוגנת', indicating it is a rental/lease agreement.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:41:14.816372+00:00"
+  },
+  {
+    "file": "WhatsApp Image 2026-05-31 at 08.15.34.jpeg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the structure and elements typical of an Israeli identity card, including a photo, chip, and Hebrew text indicating identity information.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:41:23.246776+00:00"
+  },
+  {
+    "file": "photo_5251426736270941603_w.jpg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains an Israeli identity card with visible national emblems and personal details.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:41:34.410763+00:00"
+  },
+  {
+    "file": "WhatsApp Image 2026-05-31 at 08.15.35.jpeg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the structure and text typical of an Israeli identity card, including personal details and official formatting.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:41:43.118834+00:00"
+  },
+  {
+    "file": "WhatsApp Image 2026-05-31 at 09.05.59.jpeg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmplqomg0ok.jpeg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "photo_5828141647559069988_y.jpg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "electricity_bill",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the header 'חשבון חשמל' and the logo of the Israeli Electric Corporation, indicating it is an electricity bill.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:41:58.723431+00:00"
+  },
+  {
+    "file": "photo_5828141647559069987_y.jpg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "electricity_bill",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the header 'חשבון חשמל' which translates to 'electricity bill' and includes billing details typical of utility bills.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:42:06.165096+00:00"
+  },
+  {
+    "file": "photo_5828141647559069986_y.jpg",
+    "submission": "אסיה אורלוב",
+    "missing_id": "6560564243521410541",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום חשבון חשמל",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חשבון מים",
+      "צילום תז משכיר/בעל בית",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "water_bill",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the header 'חשבון תקופתי - מים וביוב' which translates to 'Periodic Water and Sewage Bill', indicating it is a water utility bill.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:42:14.548740+00:00"
+  },
+  {
+    "file": "IMG-20260326-WA0005.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the structure and text typical of an Israeli identity card, including the words 'מדינת ישראל' (State of Israel) and 'תעודת זהות' (identity card).",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:42:23.257535+00:00"
+  },
+  {
+    "file": "Screenshot_20260428_133908_Gallery.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document displays the structure and design typical of an Israeli identity card, including Hebrew text and national symbols.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:42:35.954109+00:00"
+  },
+  {
+    "file": "Screenshot_20260428_133905_Gallery.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document is an Israeli identity card with visible features such as a photo, chip, and Hebrew text typical of an ID.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:42:47.116130+00:00"
+  },
+  {
+    "file": "IMG-20260531-WA0011.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "id_photo",
+    "gemini_conf": 1.0,
+    "auto_classified": true,
+    "reason": "The document is an Israeli identity card with visible national emblems and personal details.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:42:58.642988+00:00"
+  },
+  {
+    "file": "Screenshot_20260531_112832_Samsung Notes.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the header 'הסכם שכירות' which translates to 'rental agreement' in English.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:43:07.701793+00:00"
+  },
+  {
+    "file": "Screenshot_20260531_112832_Samsung Notes_731.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the header 'הסכם שכירות' which translates to 'rental agreement' in English, indicating it is a lease contract.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:43:16.399629+00:00"
+  },
+  {
+    "file": "Screenshot_20260531_112900_Samsung Notes.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpofni283z.jpg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "Screenshot_20260531_112914_Samsung Notes.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmp2cc4y6dg.jpg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "Screenshot_20260531_112917_Samsung Notes.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpni4g1wuw.jpg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "Screenshot_20260531_112924_Samsung Notes.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmp95igbwnk.jpg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "Screenshot_20260531_112910_Samsung Notes.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains terms related to rental payments and obligations, typical of a lease agreement.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:44:03.307459+00:00"
+  },
+  {
+    "file": "Screenshot_20260531_112920_Samsung Notes.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "lease_contract",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains structured text typical of a rental agreement, including terms related to leasing and signatures.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:44:12.518323+00:00"
+  },
+  {
+    "file": "Screenshot_20260531_112928_Samsung Notes.jpg",
+    "submission": "אסף אבידן",
+    "missing_id": "6560253951019669426",
+    "checklist": [
+      "צילום ספח שלי",
+      "צילום תז של השוכרים בחוזה",
+      "צילום חוזה שכירות - מלא וחתום"
+    ],
+    "gemini_type": "",
+    "gemini_conf": 0.0,
+    "auto_classified": false,
+    "reason": "No keywords matched in filename 'tmpzkjrrz_q.jpg'",
+    "model": "",
+    "classified_at": ""
+  },
+  {
+    "file": "Screenshot_20260531_101216_WhatsApp.jpg",
+    "submission": "נהוראי לוי",
+    "missing_id": "6560209135285340330",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה גז",
+      "צילום מונה מים",
+      "צילום חשבון ארנונה"
+    ],
+    "gemini_type": "gas_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a meter with dials and the text 'מונה גז' indicating it is a gas meter reading.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:45:28.577124+00:00"
+  },
+  {
+    "file": "Screenshot_20260531_101212_WhatsApp.jpg",
+    "submission": "נהוראי לוי",
+    "missing_id": "6560209135285340330",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה גז",
+      "צילום מונה מים",
+      "צילום חשבון ארנונה"
+    ],
+    "gemini_type": "water_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a water meter with a digital display and the text 'מונה מים' which means 'water meter' in Hebrew.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:45:37.528749+00:00"
+  },
+  {
+    "file": "Screenshot_20260531_101229_WhatsApp.jpg",
+    "submission": "נהוראי לוי",
+    "missing_id": "6560209135285340330",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה גז",
+      "צילום מונה מים",
+      "צילום חשבון ארנונה"
+    ],
+    "gemini_type": "arnona_bill",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The document contains the term 'ארנונה' which indicates it is a municipal property tax bill.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:45:46.718157+00:00"
+  },
+  {
+    "file": "Screenshot_20260531_101207_WhatsApp.jpg",
+    "submission": "נהוראי לוי",
+    "missing_id": "6560209135285340330",
+    "checklist": [
+      "צילום מונה חשמל",
+      "צילום מונה גז",
+      "צילום מונה מים",
+      "צילום חשבון ארנונה"
+    ],
+    "gemini_type": "electricity_meter",
+    "gemini_conf": 0.95,
+    "auto_classified": true,
+    "reason": "The image shows a device with a digital display and dials typical of an electricity meter.",
+    "model": "gpt-4o",
+    "classified_at": "2026-06-21T20:45:55.894724+00:00"
+  }
+]

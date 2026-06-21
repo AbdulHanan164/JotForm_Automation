@@ -276,25 +276,396 @@ class CheckboxClassifier(DocumentClassifier):
             "classifier": "CheckboxClassifier"
         }
 
-class ClassifierPipeline(DocumentClassifier):
-    def __init__(self):
-        self.classifiers = [
-            FilenameClassifier(),
-            CheckboxClassifier()
-        ]
-        
+class GeminiVisionClassifier(DocumentClassifier):
+    """
+    Phase 10C — Gemini Flash Vision document classifier.
+
+    Sends an image or PDF file to Google Gemini Flash Vision and returns a
+    structured ClassificationResult.
+
+    Behaviour
+    ---------
+    * Only activated when ``settings.gemini_api_key`` is non-empty.
+    * If the API key is missing → returns confidence=0.0 (skip to next classifier).
+    * If the API call fails (network, quota, timeout) → returns confidence=0.0
+      so the file is routed to needs_review rather than crashing the pipeline.
+    * Confidence threshold for auto-merge: ≥ 0.90 (enforced by ClassifierPipeline).
+
+    Supported document types
+    ------------------------
+    id_photo, lease_contract, arnona_bill, water_bill, water_meter,
+    electricity_bill, electricity_meter, gas_bill, gas_meter,
+    tabu_document, sale_contract, corp_cert, signature
+
+    ClassificationResult extensions
+    --------------------------------
+    In addition to the base fields the result includes:
+      ``model``          — Gemini model name used (e.g. "gemini-2.5-flash")
+      ``classified_at``  — ISO-8601 UTC timestamp of the API call
+    These extra keys are stored verbatim in the manifest for audit trail.
+    """
+
+    # Gemini model to use.  gemini-2.5-flash gives the best price/accuracy ratio
+    # for document vision tasks and supports Hebrew natively.
+    MODEL_ID = "gemini-2.5-flash"
+
+    # Supported file formats
+    _SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".webp", ".gif", ".pdf"}
+
+    # Canonical document types the model is allowed to return
+    _VALID_TYPES = {
+        "id_photo", "lease_contract", "arnona_bill",
+        "water_bill", "water_meter",
+        "electricity_bill", "electricity_meter",
+        "gas_bill", "gas_meter",
+        "tabu_document", "sale_contract",
+        "corp_cert", "signature",
+    }
+
+    # Classification prompt — bilingual (Hebrew + English) for maximum accuracy
+    # on Israeli real-estate documents.
+    _PROMPT = """\
+You are a document classification expert specialising in Israeli real-estate rental documents.
+Examine the provided image or PDF and classify it into exactly ONE of the following document types:
+
+  id_photo          — Israeli identity card (תעודת זהות / תז / ספח) or passport
+  lease_contract    — Rental/lease agreement (חוזה שכירות / הסכם שכירות / חוזה מכר חתום)
+  arnona_bill       — Municipal property tax bill (חשבון ארנונה)
+  water_bill        — Water utility bill (חשבון מים)
+  water_meter       — Photograph of a water meter reading (קריאת מונה מים / מונה מים)
+  electricity_bill  — Electricity bill (חשבון חשמל / חברת חשמל)
+  electricity_meter — Photograph of an electricity meter reading (קריאת מונה חשמל / מונה חשמל)
+  gas_bill          — Gas utility bill (חשבון גז)
+  gas_meter         — Photograph of a gas meter reading (קריאת מונה גז / מונה גז)
+  tabu_document     — Land registry extract (נסח טאבו / נסח רשם המקרקעין)
+  sale_contract     — Property purchase agreement (חוזה מכר / הסכם רכישה)
+  corp_cert         — Company / association registration certificate (תעודת התאגדות)
+  signature         — Standalone signature document or signature page
+
+Respond with a JSON object only — no markdown, no extra text:
+{
+  "document_type": "<one of the types above>",
+  "confidence": <0.0 to 1.0>,
+  "reason": "<one-sentence explanation in English>"
+}
+
+Rules:
+- If you cannot identify the document with confidence >= 0.70, set document_type to ""
+  and confidence to the value you have.
+- Never guess; return "" if genuinely uncertain.
+- Focus on visible headers, logos, form structure, meter dials, and text content.
+"""
+
     def classify(self, file_path: str, context: dict[str, Any] | None = None) -> ClassificationResult:
-        # First try filename classifier
-        res = self.classifiers[0].classify(file_path, context)
+        from app.config import settings
+        api_key = settings.gemini_api_key
+
+        if not api_key:
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": "GeminiVisionClassifier skipped: GEMINI_API_KEY not configured",
+                "classifier": "GeminiVisionClassifier",
+            }
+
+        path = Path(file_path)
+        ext = path.suffix.lower()
+
+        if ext not in self._SUPPORTED_EXTS:
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": f"GeminiVisionClassifier skipped: unsupported extension '{ext}'",
+                "classifier": "GeminiVisionClassifier",
+            }
+
+        if not path.exists():
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": f"GeminiVisionClassifier skipped: file not found at '{file_path}'",
+                "classifier": "GeminiVisionClassifier",
+            }
+
+        try:
+            return self._call_gemini(api_key, path, ext)
+        except Exception as exc:
+            logger.warning(
+                "GeminiVisionClassifier API error for '%s': %s — routing to needs_review",
+                path.name, exc
+            )
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": f"GeminiVisionClassifier API error: {exc}",
+                "classifier": "GeminiVisionClassifier",
+            }
+
+    def _call_gemini(self, api_key: str, path: Path, ext: str) -> ClassificationResult:
+        """Make the Gemini API call and parse the response."""
+        import json as _json
+
+        try:
+            from google import genai
+            from google.genai import types as genai_types
+        except ImportError:
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": "google-genai package not installed; run: pip install google-genai",
+                "classifier": "GeminiVisionClassifier",
+            }
+
+        # Determine MIME type
+        mime_map = {
+            ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+            ".png": "image/png", ".heic": "image/heic",
+            ".webp": "image/webp", ".gif": "image/gif",
+            ".pdf": "application/pdf",
+        }
+        mime_type = mime_map.get(ext, "image/jpeg")
+
+        # Read file bytes
+        file_bytes = path.read_bytes()
+
+        client = genai.Client(api_key=api_key)
+
+        response = client.models.generate_content(
+            model=self.MODEL_ID,
+            contents=[
+                genai_types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+                self._PROMPT,
+            ],
+            config=genai_types.GenerateContentConfig(
+                temperature=0.0,
+                max_output_tokens=512,  # Increased to 512 for a bit of buffer
+                thinking_config=genai_types.ThinkingConfig(thinking_budget=0)
+            ),
+        )
+
+        raw_text = (response.text or "").strip()
+        classified_at = datetime.now(timezone.utc).isoformat()
+
+        # Strip markdown fences if the model added them
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:]
+            raw_text = raw_text.strip()
+
+        try:
+            parsed = _json.loads(raw_text)
+        except _json.JSONDecodeError as exc:
+            logger.warning(
+                "GeminiVisionClassifier: JSON parse error for '%s': %s — raw: %r",
+                path.name, exc, raw_text[:200]
+            )
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": f"Gemini returned unparseable response: {raw_text[:100]}",
+                "classifier": "GeminiVisionClassifier",
+            }
+
+        doc_type   = str(parsed.get("document_type", "")).strip()
+        confidence = float(parsed.get("confidence", 0.0))
+        reason     = str(parsed.get("reason", "")).strip()
+
+        # Validate document type against known set
+        if doc_type and doc_type not in self._VALID_TYPES:
+            logger.warning(
+                "GeminiVisionClassifier: unknown type '%s' for '%s'; marking unclassified",
+                doc_type, path.name
+            )
+            doc_type   = ""
+            confidence = 0.0
+            reason     = f"Gemini returned unknown document type; marking unclassified"
+
+        return {
+            "document_type": doc_type,
+            "confidence": confidence,
+            "reason": reason,
+            "classifier": "GeminiVisionClassifier",
+            "model": self.MODEL_ID,
+            "classified_at": classified_at,
+        }
+
+
+
+class OpenAIVisionClassifier(DocumentClassifier):
+    """
+    Phase 10D — OpenAI Vision (GPT-4o) document classifier.
+    Only triggered when settings.openai_api_key is set and Gemini is skipped or not confident.
+    """
+    MODEL_ID = "gpt-4o"
+    _SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+    _VALID_TYPES = GeminiVisionClassifier._VALID_TYPES
+    _PROMPT = GeminiVisionClassifier._PROMPT
+
+    def classify(self, file_path: str, context: dict[str, Any] | None = None) -> ClassificationResult:
+        from app.config import settings
+        api_key = settings.openai_api_key
+
+        if not api_key:
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": "OpenAIVisionClassifier skipped: OPENAI_API_KEY not configured",
+                "classifier": "OpenAIVisionClassifier",
+            }
+
+        path = Path(file_path)
+        ext = path.suffix.lower()
+
+        if ext not in self._SUPPORTED_EXTS:
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": f"OpenAIVisionClassifier skipped: unsupported extension '{ext}'",
+                "classifier": "OpenAIVisionClassifier",
+            }
+
+        if not path.exists():
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": f"OpenAIVisionClassifier skipped: file not found at '{file_path}'",
+                "classifier": "OpenAIVisionClassifier",
+            }
+
+        try:
+            return self._call_openai(api_key, path, ext)
+        except Exception as exc:
+            logger.warning(
+                "OpenAIVisionClassifier API error for '%s': %s — routing to needs_review",
+                path.name, exc
+            )
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": f"OpenAIVisionClassifier API error: {exc}",
+                "classifier": "OpenAIVisionClassifier",
+            }
+
+    def _call_openai(self, api_key: str, path: Path, ext: str) -> ClassificationResult:
+        import json as _json
+        import base64
+        try:
+            from openai import OpenAI
+        except ImportError:
+            return {
+                "document_type": "",
+                "confidence": 0.0,
+                "reason": "openai package not installed; run: pip install openai",
+                "classifier": "OpenAIVisionClassifier",
+            }
+
+        # Determine MIME type
+        mime_map = {
+            ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+            ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif",
+        }
+        mime_type = mime_map.get(ext, "image/jpeg")
+
+        file_bytes = path.read_bytes()
+        base64_image = base64.b64encode(file_bytes).decode('utf-8')
+        image_url = f"data:{mime_type};base64,{base64_image}"
+
+        client = OpenAI(api_key=api_key)
+
+        response = client.chat.completions.create(
+            model=self.MODEL_ID,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": self._PROMPT},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_url,
+                            },
+                        },
+                    ],
+                }
+            ],
+            temperature=0.0,
+            max_tokens=256,
+            response_format={"type": "json_object"}
+        )
+
+        raw_text = (response.choices[0].message.content or "").strip()
+        classified_at = datetime.now(timezone.utc).isoformat()
+
+        # Parse JSON
+        parsed = _json.loads(raw_text)
+
+        doc_type   = str(parsed.get("document_type", "")).strip()
+        confidence = float(parsed.get("confidence", 0.0))
+        reason     = str(parsed.get("reason", "")).strip()
+
+        if doc_type and doc_type not in self._VALID_TYPES:
+            doc_type   = ""
+            confidence = 0.0
+            reason     = f"OpenAI returned unknown document type; marking unclassified"
+
+        return {
+            "document_type": doc_type,
+            "confidence": confidence,
+            "reason": reason,
+            "classifier": "OpenAIVisionClassifier",
+            "model": self.MODEL_ID,
+            "classified_at": classified_at,
+        }
+
+
+class ClassifierPipeline(DocumentClassifier):
+    """
+    Phase 10C/D pipeline order:
+
+      1. FilenameClassifier     — deterministic, zero cost, instant
+         ↓ if confidence < 0.90
+      2. GeminiVisionClassifier — AI vision, only when key is configured
+         ↓ if confidence < 0.90 or key not set
+      3. OpenAIVisionClassifier — AI vision fallback, only when key is configured
+         ↓ if confidence < 0.90 or key not set
+      4. CheckboxClassifier     — checklist inference fallback (always needs_review)
+
+    Auto-merge is only triggered for results with confidence ≥ 0.90 from
+    FilenameClassifier, GeminiVisionClassifier, or OpenAIVisionClassifier.
+    CheckboxClassifier always caps at 0.80 → needs_review.
+    """
+
+    def __init__(self):
+        self._filename_clf  = FilenameClassifier()
+        self._gemini_clf    = GeminiVisionClassifier()
+        self._openai_clf    = OpenAIVisionClassifier()
+        self._checkbox_clf  = CheckboxClassifier()
+
+    def classify(self, file_path: str, context: dict[str, Any] | None = None) -> ClassificationResult:
+        # ── Stage 1: FilenameClassifier ──────────────────────────────────────
+        res = self._filename_clf.classify(file_path, context)
         if res["confidence"] >= 0.90:
             return res
-            
-        # Fallback to checkbox classifier
-        cb_res = self.classifiers[1].classify(file_path, context)
+
+        # ── Stage 2: GeminiVisionClassifier ──────────────────────────────────
+        gemini_res = self._gemini_clf.classify(file_path, context)
+        if gemini_res["confidence"] >= 0.90:
+            return gemini_res
+
+        # ── Stage 3: OpenAIVisionClassifier ──────────────────────────────────
+        openai_res = self._openai_clf.classify(file_path, context)
+        if openai_res["confidence"] >= 0.90:
+            return openai_res
+
+        # ── Stage 4: CheckboxClassifier (always needs_review) ────────────────
+        cb_res = self._checkbox_clf.classify(file_path, context)
         if cb_res["confidence"] > 0.0:
             return cb_res
-            
+
+        # Final fallback: return whatever FilenameClassifier gave (0.00)
         return res
+
 
 # ── Document Merger ─────────────────────────────────────────────────────────
 
