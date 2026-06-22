@@ -26,24 +26,55 @@
 </div>
 
 {# ── All parties ── #}
+{% set txn_code = sub.get("transaction_type", "") %}
+
+{# Set dynamic incoming label #}
+{% if txn_code == "sale_purchase" %}
+  {% set incoming_lbl = "קונה" if lang == "he" else "Buyer" %}
+{% elif txn_code.startswith("landlord_") %}
+  {% set incoming_lbl = "דייר נכנס" if lang == "he" else "Incoming Tenant" %}
+{% else %}
+  {% set incoming_lbl = t.role_incoming %}
+{% endif %}
+
+{# Set dynamic outgoing label #}
+{% if txn_code == "sale_transfer" %}
+  {% set outgoing_lbl = "מוכר" if lang == "he" else "Seller" %}
+{% elif txn_code.startswith("rental_termination_") %}
+  {% set outgoing_lbl = "דייר יוצא" if lang == "he" else "Outgoing Tenant" %}
+{% else %}
+  {% set outgoing_lbl = t.role_outgoing %}
+{% endif %}
+
+{# Set dynamic landlord label #}
+{% if txn_code.startswith("landlord_") %}
+  {% set landlord_lbl = "בעל הבית (משכיר)" if lang == "he" else "Landlord (Lessor)" %}
+{% else %}
+  {% set landlord_lbl = t.role_landlord %}
+{% endif %}
+
+{# Conditional cards flags #}
+{% set has_incoming = incoming and incoming.full_name and txn_code != "sale_transfer" and not txn_code.startswith("rental_termination_") %}
 {% set has_outgoing = outgoing and outgoing.full_name %}
 {% set has_partner  = partner  and partner.full_name  %}
 {% set has_landlord = landlord and landlord.full_name %}
 
 <div class="grid2">
-  {# Incoming tenant — always shown #}
+  {# Incoming tenant — only when present and applicable #}
+  {% if has_incoming %}
   <div class="card">
-    <h2>{{ t.role_incoming }}</h2>
-    <div class="kv"><span class="k">{{ t.lbl_fullname }}</span><span class="v">{{ incoming.full_name or item.customer_name or "—" }}</span></div>
+    <h2>{{ incoming_lbl }}</h2>
+    <div class="kv"><span class="k">{{ t.lbl_fullname }}</span><span class="v">{{ incoming.full_name }}</span></div>
     <div class="kv"><span class="k">{{ t.lbl_id }}</span><span class="v">{{ incoming.id_number or "—" }}</span></div>
-    <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ incoming.phone or item.customer_phone or "—" }}</span></div>
+    <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ incoming.phone or "—" }}</span></div>
     {% if incoming.email %}<div class="kv"><span class="k">{{ t.lbl_email }}</span><span class="v">{{ incoming.email }}</span></div>{% endif %}
   </div>
+  {% endif %}
 
   {# Outgoing tenant — only when present #}
   {% if has_outgoing %}
   <div class="card">
-    <h2>{{ t.role_outgoing }}</h2>
+    <h2>{{ outgoing_lbl }}</h2>
     <div class="kv"><span class="k">{{ t.lbl_fullname }}</span><span class="v">{{ outgoing.full_name }}</span></div>
     <div class="kv"><span class="k">{{ t.lbl_id }}</span><span class="v">{{ outgoing.id_number or "—" }}</span></div>
     <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ outgoing.phone or "—" }}</span></div>
@@ -65,7 +96,7 @@
   {# Landlord — only when present #}
   {% if has_landlord %}
   <div class="card">
-    <h2>{{ t.role_landlord }}</h2>
+    <h2>{{ landlord_lbl }}</h2>
     <div class="kv"><span class="k">{{ t.lbl_fullname }}</span><span class="v">{{ landlord.full_name }}</span></div>
     <div class="kv"><span class="k">{{ t.lbl_id }}</span><span class="v">{{ landlord.id_number or "—" }}</span></div>
     <div class="kv"><span class="k">{{ t.lbl_phone }}</span><span class="v">{{ landlord.phone or "—" }}</span></div>
