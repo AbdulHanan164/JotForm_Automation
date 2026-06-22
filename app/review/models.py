@@ -2,13 +2,12 @@
 Review workflow models.
 
 Every submission enters the pipeline as "pending_review".
-An operator reviews it and either approves or rejects.
+An operator reviews it and either approves or flags it as needs_info.
 Email is only sent after approval.
 
 States:
   pending_review  — waiting for operator
   approved        — operator approved, email can be sent
-  rejected        — operator rejected with reason
   needs_info      — operator flagged it for follow-up before approval
   sent            — email was sent (final state)
 """
@@ -23,7 +22,6 @@ from typing import Any
 class ReviewStatus(str, Enum):
     PENDING_REVIEW = "pending_review"
     APPROVED       = "approved"
-    REJECTED       = "rejected"
     NEEDS_INFO     = "needs_info"
     SENT           = "sent"
 

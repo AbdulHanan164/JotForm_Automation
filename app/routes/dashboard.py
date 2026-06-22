@@ -13,7 +13,7 @@ Pages:
   GET  /dashboard                      list with status tabs + search
   GET  /dashboard/review/{id}          detail (customer, property, missing,
                                        email preview, documents, actions)
-  POST /dashboard/review/{id}/approve  | reject | needs_info   (form actions)
+  POST /dashboard/review/{id}/approve  | needs_info   (form actions)
   GET  /dashboard/documents/{id}/{f}   serve a downloaded document (preview/dl)
   GET/POST /dashboard/login            cookie login (same OPERATOR_API_KEY)
   GET  /dashboard/logout
@@ -52,12 +52,11 @@ STATUS_META: dict[str, dict[str, str]] = {
     "pending_review": {"cls": "badge-pending"},
     "needs_info":     {"cls": "badge-info"},
     "approved":       {"cls": "badge-approved"},
-    "rejected":       {"cls": "badge-rejected"},
     "sent":           {"cls": "badge-sent"},
 }
 
 # Status tabs on the list page, in order (labels resolved per language).
-TAB_KEYS = ["all", "pending_review", "needs_info", "approved", "rejected", "sent"]
+TAB_KEYS = ["all", "pending_review", "needs_info", "approved", "sent"]
 
 _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
 
@@ -93,12 +92,11 @@ _T: dict[str, dict] = {
         "override_label": "אשר למרות שגיאות עקביות",
         "override_ph": "הסבר (חובה באישור עם שגיאות)",
         "approve_btn": "✓ אשר", "needsinfo_ph": "מה חסר / נדרש מהלקוח?",
-        "needsinfo_btn": "↻ נדרש מידע", "reject_ph": "סיבת דחייה (חובה)", "reject_btn": "✕ דחה",
+        "needsinfo_btn": "↻ נדרש מידע",
         "handled": "הפנייה כבר טופלה. סטטוס:", "review_notes": "הערות בדיקה",
         "confirm_approve": "לאשר את הפנייה? המייל יישלח ידנית לאחר מכן.",
-        "confirm_reject": "לדחות את הפנייה?",
         "status": {"pending_review": "ממתין לבדיקה", "needs_info": "נדרש מידע",
-                   "approved": "אושר", "rejected": "נדחה", "sent": "נשלח"},
+                   "approved": "אושר", "sent": "נשלח"},
         "txn_type": {
             "rental_transfer": "שכירות — כניסה",
             "sale_transfer":   "מכירת נכס",
@@ -119,10 +117,10 @@ _T: dict[str, dict] = {
             "sale_purchase": "קניית נכס",
         },
         "flash": {"approved": "הפנייה אושרה. שלח את המייל ללקוח באופן ידני.",
-                  "rejected": "הפנייה נדחתה.", "needs_info": "הפנייה סומנה כ'נדרש מידע'.",
+                  "needs_info": "הפנייה סומנה כ'נדרש מידע'.",
                   "already_handled": "הפנייה כבר טופלה.",
                   "override_needed": "הפנייה מכילה שגיאות. סמן 'אשר למרות שגיאות' עם הסבר.",
-                  "need_reason": "חובה לציין סיבת דחייה.", "need_notes": "חובה לציין הערה."},
+                  "need_notes": "חובה לציין הערה."},
     },
     "en": {
         "brand": "Mazeh Kal · Operator Dashboard", "nav_submissions": "Submissions",
@@ -154,12 +152,11 @@ _T: dict[str, dict] = {
         "override_label": "Approve despite consistency errors",
         "override_ph": "Explanation (required when overriding errors)",
         "approve_btn": "✓ Approve", "needsinfo_ph": "What is missing / needed from the customer?",
-        "needsinfo_btn": "↻ Needs info", "reject_ph": "Rejection reason (required)", "reject_btn": "✕ Reject",
+        "needsinfo_btn": "↻ Needs info",
         "handled": "Already handled. Status:", "review_notes": "Review notes",
         "confirm_approve": "Approve this submission? The email is sent manually afterward.",
-        "confirm_reject": "Reject this submission?",
         "status": {"pending_review": "Pending review", "needs_info": "Needs info",
-                   "approved": "Approved", "rejected": "Rejected", "sent": "Sent"},
+                   "approved": "Approved", "sent": "Sent"},
         "txn_type": {
             "rental_transfer": "Rental — Move In",
             "sale_transfer":   "Sale (Account Closure)",
@@ -180,10 +177,10 @@ _T: dict[str, dict] = {
             "sale_purchase": "Purchase (New Owner)",
         },
         "flash": {"approved": "Submission approved. Send the email to the customer manually.",
-                  "rejected": "Submission rejected.", "needs_info": "Submission flagged as 'needs info'.",
+                  "needs_info": "Submission flagged as 'needs info'.",
                   "already_handled": "Submission already handled.",
                   "override_needed": "Submission has errors. Tick 'approve despite errors' with a note.",
-                  "need_reason": "A rejection reason is required.", "need_notes": "A note is required."},
+                  "need_notes": "A note is required."},
     },
 }
 
@@ -415,21 +412,6 @@ def do_approve(request: Request, submission_id: str,
     logger.info("Dashboard: %s APPROVED", submission_id)
     return _back(submission_id, msg="approved")
 
-
-@router.post("/review/{submission_id}/reject")
-def do_reject(request: Request, submission_id: str, reason: str = Form(...)):
-    if not _is_authed(request):
-        return _redirect_login()
-    item = Q.load(submission_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="הפנייה לא נמצאה")
-    if not item.is_actionable:
-        return _back(submission_id, err="already_handled")
-    if not reason.strip():
-        return _back(submission_id, err="need_reason")
-    Q.update_status(submission_id, ReviewStatus.REJECTED, notes=reason, reviewed_by="operator")
-    logger.info("Dashboard: %s REJECTED", submission_id)
-    return _back(submission_id, msg="rejected")
 
 
 @router.post("/review/{submission_id}/needs_info")

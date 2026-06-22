@@ -202,12 +202,6 @@
       <textarea name="notes" placeholder="{{ t.needsinfo_ph }}" required></textarea>
       <button class="btn btn-info" type="submit">{{ t.needsinfo_btn }}</button>
     </form>
-
-    <form method="post" action="/dashboard/review/{{ item.submission_id }}/reject" class="actions" style="margin-top:10px"
-          onsubmit="return confirm('{{ t.confirm_reject }}')">
-      <textarea name="reason" placeholder="{{ t.reject_ph }}" required></textarea>
-      <button class="btn btn-reject" type="submit">{{ t.reject_btn }}</button>
-    </form>
   {% else %}
     <p class="muted">{{ t.handled }} {{ t.status[item.status] }}.</p>
     {% if item.review_notes %}<div class="kv"><span class="k">{{ t.review_notes }}</span><span class="v">{{ item.review_notes }}</span></div>{% endif %}

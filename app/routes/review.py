@@ -10,7 +10,6 @@ Endpoints:
   GET  /review/{id}               — full review item
   GET  /review/{id}/email         — the draft email (plain text, RTL Hebrew)
   POST /review/{id}/approve       — approve and return final email for sending
-  POST /review/{id}/reject        — reject with a reason
   POST /review/{id}/needs_info    — flag for follow-up
   POST /review/{id}/sent          — mark email as actually sent (NEW in v0.6)
   PUT  /review/{id}/email         — operator edits the draft email before approving
@@ -213,29 +212,6 @@ def approve(
         ),
     }
 
-
-@router.post("/{submission_id}/reject", summary="Reject a submission")
-def reject(
-    submission_id: str,
-    reason:      str = Body(..., embed=True),
-    reviewed_by: str = Body("operator", embed=True),
-    _op: _Auth = None,
-):
-    """Reject a submission with a mandatory reason."""
-    item = _get_or_404(submission_id)
-    if not item.is_actionable:
-        raise HTTPException(
-            status_code=409,
-            detail=f"הפנייה כבר טופלה (status={item.status.value})",
-        )
-    Q.update_status(
-        submission_id = submission_id,
-        new_status    = ReviewStatus.REJECTED,
-        notes         = reason,
-        reviewed_by   = reviewed_by,
-    )
-    logger.info("Submission %s REJECTED by %s: %s", submission_id, reviewed_by, reason)
-    return {"status": "rejected", "submission_id": submission_id, "reason": reason}
 
 
 @router.post("/{submission_id}/needs_info", summary="Flag for more information")

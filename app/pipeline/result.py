@@ -6,7 +6,7 @@ Version 0.4.0 additions:
   - validation_issues : cross-document consistency issues
   - unified_view      : merged form + document data
   - visibility        : which fields were visible (conditional logic)
-  - review_status     : pending_review | approved | rejected
+  - review_status     : pending_review | approved | needs_info | sent
 """
 from __future__ import annotations
 

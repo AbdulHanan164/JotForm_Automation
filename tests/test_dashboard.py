@@ -76,7 +76,7 @@ class TestDashboardPages:
         auth_client.cookies.set("dash_key", KEY)
         r = auth_client.get(f"/dashboard/review/{sid}")
         assert r.status_code == 200
-        assert "פרטי לקוח" in r.text
+        assert "דייר נכנס" in r.text
         assert "039541446" in r.text          # ID number
         assert "השלמת פרטים" in r.text         # email subject preview
         assert "מספר זיהוי נכס" in r.text       # missing info
@@ -107,11 +107,6 @@ class TestDashboardActions:
                          data={"override_errors": "1", "notes": "ok"}, follow_redirects=False)
         assert Q.load(sid).status == ReviewStatus.APPROVED
 
-    def test_reject_requires_reason(self, auth_client, tmp_dirs):
-        sid = _seed("dash-rej-1")
-        auth_client.cookies.set("dash_key", KEY)
-        auth_client.post(f"/dashboard/review/{sid}/reject", data={"reason": "מסמכים שגויים"}, follow_redirects=False)
-        assert Q.load(sid).status == ReviewStatus.REJECTED
 
     def test_needs_info(self, auth_client, tmp_dirs):
         sid = _seed("dash-ni-1")
@@ -150,7 +145,7 @@ class TestDashboardLanguage:
         auth_client.cookies.set("dash_key", KEY)
         auth_client.cookies.set("dash_lang", "en")
         r = auth_client.get(f"/dashboard/review/{sid}")
-        assert "Customer details" in r.text
+        assert "Incoming Tenant" in r.text
         assert "Property details" in r.text
         assert "Approve" in r.text
         # real submission data stays in Hebrew
