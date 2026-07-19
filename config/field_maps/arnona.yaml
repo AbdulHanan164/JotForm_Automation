@@ -428,7 +428,7 @@ fields:
   # (נסח טאבו) are NOT uploaded on this form. The form's own text (q466/q468/
   # q470) states they are requested later by email after review. They are
   # therefore intentionally absent here. Their "missing document" detection
-  # lives in business logic (REQUIRED_DOCS), which is unchanged.
+  # lives in the canonical requirement engine (app/rules/requirements.py).
 
   # ── Payment ────────────────────────────────────────────────────────────────
   - jotform_id: "q422_amount"

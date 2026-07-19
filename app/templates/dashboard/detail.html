@@ -23,6 +23,13 @@
   <h2>{{ t.sec_request }}</h2>
   <div class="kv"><span class="k">{{ t.lbl_req_type }}</span><span class="v" style="font-weight:600">{{ txn_label }}</span></div>
   <div class="kv"><span class="k">{{ t.lbl_services }}</span><span class="v">{{ sub.transfer_to or item.services or "—" }}</span></div>
+  {% if supplemental %}
+  <div class="kv"><span class="k">{{ "שירותים נוספים" if lang == "he" else "Supplemental services" }}</span>
+    <span class="v">
+      {% for svc in supplemental %}{{ svc.label_he if lang == "he" else (svc.label_en or svc.label_he) }}{{ ", " if not loop.last }}{% endfor %}
+    </span>
+  </div>
+  {% endif %}
 </div>
 
 {# ── All parties ── #}

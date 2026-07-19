@@ -41,14 +41,28 @@ S_FHS       = "fhs"   # JotForm computed normalization columns (74-92 in Google 
 _YAML_CONFIG = Path("config/field_maps/arnona.yaml")
 
 
-def _load_yaml_field_map() -> tuple[dict[str, dict], list[str]]:
+def _is_fabricated_id(jotform_id: str) -> bool:
+    """True for IDs that can never match a real webhook field (e.g.
+    ``fhs_partner_email_placeholder``). Such entries must NOT enter FIELD_MAP:
+    besides being useless for parsing, they leak into
+    ``evaluator.build_label_visibility`` as permanently-visible passive QIDs
+    and corrupt label-visibility decisions."""
+    lowered = jotform_id.lower()
+    return any(marker in lowered for marker in ("placeholder", "here", "todo"))
+
+
+def _load_yaml_field_map() -> tuple[dict[str, dict], list[str], list[dict]]:
     """
-    Load field map from YAML config.
+    Load field map from YAML config — the single mapping layer.
 
     Returns:
-      (field_map_dict, placeholder_labels)
-      field_map_dict: {jotform_id: {label, section, type}}
-      placeholder_labels: list of label strings that are still PLACEHOLDER
+      (field_map_dict, placeholder_labels, unresolved)
+      field_map_dict:     {jotform_id: {label, section, type, verified}} —
+                          only entries whose ID could plausibly match a real
+                          webhook field (fabricated IDs are quarantined)
+      placeholder_labels: labels still awaiting verification (incl. quarantined)
+      unresolved:         full entries quarantined or unverified, for
+                          /admin/fieldmap status and docs/UNRESOLVED_MAPPINGS.md
     """
     try:
         import yaml  # type: ignore
@@ -57,25 +71,22 @@ def _load_yaml_field_map() -> tuple[dict[str, dict], list[str]]:
             "PyYAML not installed — field map YAML not loaded. "
             "Run: pip install pyyaml"
         )
-        return {}, []
+        return {}, [], []
 
     if not _YAML_CONFIG.exists():
-        logger.warning(
-            "Field map config not found: %s — "
-            "using Python fallback defaults.",
-            _YAML_CONFIG,
-        )
-        return {}, []
+        logger.warning("Field map config not found: %s", _YAML_CONFIG)
+        return {}, [], []
 
     try:
         with _YAML_CONFIG.open(encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
     except Exception as exc:
         logger.error("Failed to parse field map YAML %s: %s", _YAML_CONFIG, exc)
-        return {}, []
+        return {}, [], []
 
     field_map: dict[str, dict] = {}
     placeholders: list[str] = []
+    unresolved: list[dict] = []
 
     for entry in data.get("fields", []):
         jfid    = entry.get("jotform_id", "")
@@ -87,6 +98,16 @@ def _load_yaml_field_map() -> tuple[dict[str, dict], list[str]]:
         if not jfid or not label:
             continue
 
+        if not verified:
+            placeholders.append(label)
+            unresolved.append({
+                "jotform_id": jfid, "label": label, "section": section,
+                "type": ftype, "fabricated": _is_fabricated_id(jfid),
+            })
+
+        if _is_fabricated_id(jfid):
+            continue   # quarantined — documented, never matched
+
         field_map[jfid] = {
             "label":    label,
             "section":  section,
@@ -94,25 +115,15 @@ def _load_yaml_field_map() -> tuple[dict[str, dict], list[str]]:
             "verified": verified,
         }
 
-        if not verified:
-            placeholders.append(label)
-
-    return field_map, placeholders
+    return field_map, placeholders, unresolved
 
 
 # ── Build the field map ───────────────────────────────────────────────────────
 
-_YAML_MAP, _PLACEHOLDER_LABELS = _load_yaml_field_map()
+_YAML_MAP, _PLACEHOLDER_LABELS, UNRESOLVED_MAPPINGS = _load_yaml_field_map()
 
-# v0.8.2: Python fallback defaults removed — they held fictional placeholder
-# IDs for the retired form 251955479892982 and inflated the unverified count.
-# config/field_maps/arnona.yaml (real production IDs, verified against
-# submission MZK6852) is now the single source of truth.
-_PYTHON_DEFAULTS: dict[str, dict] = {}
-
-# YAML overrides Python defaults for the same jotform_id.
-# This means: update the YAML to update field IDs; Python defaults are fallback.
-FIELD_MAP: dict[str, dict[str, Any]] = {**_PYTHON_DEFAULTS, **_YAML_MAP}
+# config/field_maps/arnona.yaml is the single source of truth for field IDs.
+FIELD_MAP: dict[str, dict[str, Any]] = dict(_YAML_MAP)
 
 
 # ── Startup validation ────────────────────────────────────────────────────────
@@ -122,17 +133,18 @@ def check_field_map_status() -> dict[str, Any]:
     Returns a status report on the field map.
     Called on startup and by GET /admin/fieldmap/arnona/status.
     """
-    total     = len(FIELD_MAP)
-    verified  = sum(1 for v in FIELD_MAP.values() if v.get("verified", False))
-    unverified = total - verified
+    active     = len(FIELD_MAP)
+    unverified = len(UNRESOLVED_MAPPINGS)
+    total      = active + sum(1 for u in UNRESOLVED_MAPPINGS if u["fabricated"])
+    verified   = sum(1 for v in FIELD_MAP.values() if v.get("verified", False))
 
     if unverified > 0:
         logger.warning(
-            "FIELD MAP: %d/%d fields are still PLACEHOLDER IDs. "
-            "Submissions will not parse correctly until real IDs are set. "
-            "Run GET /discover/{submission_id} to get real IDs, then update "
-            "config/field_maps/arnona.yaml.",
-            unverified, total,
+            "FIELD MAP: %d mapping(s) unresolved (%d fabricated IDs quarantined). "
+            "See docs/UNRESOLVED_MAPPINGS.md. Run GET /discover/{submission_id} "
+            "to get real IDs, then update config/field_maps/arnona.yaml.",
+            unverified,
+            sum(1 for u in UNRESOLVED_MAPPINGS if u["fabricated"]),
         )
     else:
         logger.info("Field map: all %d fields verified ✓", total)
@@ -142,16 +154,12 @@ def check_field_map_status() -> dict[str, Any]:
         "verified":   verified,
         "unverified": unverified,
         "unverified_labels": _PLACEHOLDER_LABELS,
+        "unresolved": UNRESOLVED_MAPPINGS,
         "config_file": str(_YAML_CONFIG),
         "config_exists": _YAML_CONFIG.exists(),
         "status": "ok" if unverified == 0 else "placeholder_ids_present",
     }
 
 
-# ── Required documents per service type ──────────────────────────────────────
-REQUIRED_DOCS: dict[str, list[str]] = {
-    "ארנונה":  ["תעודת_זהות", "חוזה_שכירות", "חתימה"],
-    "חשמל":    ["תעודת_זהות", "חוזה_שכירות", "חתימה"],
-    "מים":     ["תעודת_זהות", "חוזה_שכירות", "חתימה"],
-    "default": ["תעודת_זהות", "חוזה_שכירות", "חתימה"],
-}
+# v0.7: REQUIRED_DOCS removed — it was dead config referenced by nothing.
+# Document requirements live in app/rules/requirements.py (DOC_RULES).

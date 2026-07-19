@@ -31,46 +31,33 @@ from pathlib import Path
 from typing import Any
 
 from app.documents.contracts import FileAnswer
+from app.core import doc_types as _dt
 
-
-# canonical doc_type : (Hebrew label as used in summary["מסמכים"], filename stem)
+# Canonical vocabulary lives in app/core/doc_types.py (v0.7).
+# DOC_TYPES is kept as the summary-facing 6-type view for backward
+# compatibility with existing manifests, review-queue JSON, and tests.
 DOC_TYPES: dict[str, tuple[str, str]] = {
-    "id_photo":       ("תעודת_זהות",     "id_photo"),
-    "lease_contract": ("חוזה_שכירות",    "lease"),
-    "signature":      ("חתימה",          "signature"),
-    "arnona_bill":    ("חשבון_ארנונה",   "arnona_bill"),
-    "corp_cert":      ("תעודת_התאגדות",  "corporation_certificate"),
-    "tabu":           ("נסח_טאבו",       "tabu"),
+    ct: _dt.CANONICAL_TYPES[ct] for ct in _dt.SUMMARY_TYPES
 }
-
-_LABEL_TO_TYPE = {heb: ct for ct, (heb, _) in DOC_TYPES.items()}
-_FILENAME_STEM = {ct: stem for ct, (_, stem) in DOC_TYPES.items()}
 
 _MZK_PLACEHOLDER = "לא סופק"
 
 
-# ── Doc-type mapping ──────────────────────────────────────────────────────────
+# ── Doc-type mapping (delegates to the canonical vocabulary) ──────────────────
 
 def doc_type_for_label(label: str) -> str:
-    """Map a Hebrew document label (or a canonical key) to a canonical doc_type.
-
-    Returns "" if unknown — the caller then stores the file under ``_unmapped/``.
-    """
-    if not label:
-        return ""
-    label = label.strip()
-    if label in DOC_TYPES:
-        return label
-    return _LABEL_TO_TYPE.get(label, "")
+    """Map a Hebrew document label (or any known spelling) to a canonical
+    doc_type. Returns "" if unknown — the caller then stores the file under
+    ``_unmapped/``."""
+    return _dt.canonicalize(label)
 
 
 def hebrew_label_for(doc_type: str) -> str:
-    entry = DOC_TYPES.get(doc_type)
-    return entry[0] if entry else ""
+    return _dt.hebrew_label(doc_type)
 
 
 def filename_stem_for(doc_type: str) -> str:
-    return _FILENAME_STEM.get(doc_type, doc_type or "document")
+    return _dt.filename_stem(doc_type)
 
 
 def sha256_hex(content: bytes) -> str:
@@ -127,6 +114,53 @@ def write_manifest(submission_id: str, data: dict[str, Any]) -> Path:
     path = submission_dir(submission_id) / "_manifest.json"
     _atomic_write_text(path, json.dumps(data, ensure_ascii=False, indent=2))
     return path
+
+
+def read_manifest(submission_id: str) -> dict[str, Any]:
+    """Load a submission's document manifest; {} when absent/corrupt."""
+    if not submission_id:
+        return {}
+    path = _docs_root() / submission_id / "_manifest.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def manifest_status(submission_id: str, requirement_type: str) -> str:
+    """THE single manifest-status lookup (v0.7) — alias-aware.
+
+    Returns the strongest status among every manifest key that satisfies
+    `requirement_type` (covering classifier spellings like "tabu_document"
+    and substitute types like a sale contract satisfying the contract
+    requirement): "present" > "needs_review" > "" (unknown/missing).
+
+    Every consumer (missing detection, summaries, post-merge review updates)
+    must use this instead of raw ``manifest["documents"][type]`` access.
+    """
+    docs = read_manifest(submission_id).get("documents", {})
+    if not isinstance(docs, dict):
+        return ""
+    best = ""
+    for key in _dt.manifest_keys_satisfying(requirement_type):
+        status = (docs.get(key) or {}).get("status", "")
+        if status == "present":
+            return "present"
+        if status == "needs_review":
+            best = "needs_review"
+    return best
+
+
+def manifest_resolves(submission_id: str, requirement_type: str) -> bool:
+    """True when the manifest shows the requirement as supplied.
+
+    ``needs_review`` counts as supplied: the customer DID send a file — it must
+    not be re-requested; the operator verifies it instead (v0.7 decision, see
+    docs/ARCHITECTURE_v0.7.md §document-engine).
+    """
+    return manifest_status(submission_id, requirement_type) in ("present", "needs_review")
 
 
 # ── MZK alias (human navigation only — never a primary key) ───────────────────

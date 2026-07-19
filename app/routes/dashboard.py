@@ -28,6 +28,7 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app.core.transactions import TRANSACTION_LABELS
 from app.review import queue as Q
 from app.review.models import ReviewStatus
 
@@ -97,25 +98,7 @@ _T: dict[str, dict] = {
         "confirm_approve": "לאשר את הפנייה? המייל יישלח ידנית לאחר מכן.",
         "status": {"pending_review": "ממתין לבדיקה", "needs_info": "נדרש מידע",
                    "approved": "אושר", "sent": "נשלח"},
-        "txn_type": {
-            "rental_transfer": "שכירות — כניסה",
-            "sale_transfer":   "מכירת נכס",
-            "owner_transfer":  "העברה לבעל הנכס",
-            "account_closure": "גמר חשבון",
-            "rental_start_single": "שכירות - כניסה (שוכר יחיד)",
-            "rental_start_couple": "שכירות - כניסה (זוג)",
-            "rental_start_roommates": "שכירות - כניסה (שותפים)",
-            "rental_start_company": "שכירות - כניסה (חברה/עסק)",
-            "rental_termination_single": "סיום שכירות - שוכר יחיד",
-            "rental_termination_couple": "סיום שכירות - זוג",
-            "rental_termination_roommates": "סיום שכירות - שותפים",
-            "rental_termination_company": "סיום שכירות - חברה/עסק",
-            "landlord_rental_single": "בעל בית - שוכר יחיד",
-            "landlord_rental_couple": "בעל בית - זוג",
-            "landlord_rental_roommates": "בעל בית - שותפים",
-            "owner_return": "חזרת בעלים לנכס",
-            "sale_purchase": "קניית נכס",
-        },
+        "txn_type": TRANSACTION_LABELS["he"],
         "flash": {"approved": "הפנייה אושרה. שלח את המייל ללקוח באופן ידני.",
                   "needs_info": "הפנייה סומנה כ'נדרש מידע'.",
                   "already_handled": "הפנייה כבר טופלה.",
@@ -157,25 +140,7 @@ _T: dict[str, dict] = {
         "confirm_approve": "Approve this submission? The email is sent manually afterward.",
         "status": {"pending_review": "Pending review", "needs_info": "Needs info",
                    "approved": "Approved", "sent": "Sent"},
-        "txn_type": {
-            "rental_transfer": "Rental — Move In",
-            "sale_transfer":   "Sale (Account Closure)",
-            "owner_transfer":  "Transfer to Owner",
-            "account_closure": "Account Closure",
-            "rental_start_single": "Rental - Move In (Single)",
-            "rental_start_couple": "Rental - Move In (Couple)",
-            "rental_start_roommates": "Rental - Move In (Roommates)",
-            "rental_start_company": "Rental - Move In (Corporate)",
-            "rental_termination_single": "Rental Termination - Single",
-            "rental_termination_couple": "Rental Termination - Couple",
-            "rental_termination_roommates": "Rental Termination - Roommates",
-            "rental_termination_company": "Rental Termination - Corporate",
-            "landlord_rental_single": "Landlord - Rental (Single)",
-            "landlord_rental_couple": "Landlord - Rental (Couple)",
-            "landlord_rental_roommates": "Landlord - Rental (Roommates)",
-            "owner_return": "Owner Return",
-            "sale_purchase": "Purchase (New Owner)",
-        },
+        "txn_type": TRANSACTION_LABELS["en"],
         "flash": {"approved": "Submission approved. Send the email to the customer manually.",
                   "needs_info": "Submission flagged as 'needs info'.",
                   "already_handled": "Submission already handled.",
@@ -367,6 +332,9 @@ def review_detail(request: Request, submission_id: str, msg: str = "", err: str 
 
     documents = _list_documents(submission_id)
 
+    supplemental = [s for s in (bd.get("supplemental_services") or [])
+                    if isinstance(s, dict) and s.get("selected", True)]
+
     return _TEMPLATES.TemplateResponse(request, "dashboard/detail.html", {
         **i18n_ctx,
         "item":         item.to_dict(),
@@ -377,6 +345,7 @@ def review_detail(request: Request, submission_id: str, msg: str = "", err: str 
         "property":     prop,
         "dates":        dates,
         "sub":          sub,
+        "supplemental": supplemental,
         "txn_label":    txn_label,
         "missing_info": item.missing_info or [],
         "missing_docs": item.missing_docs or [],

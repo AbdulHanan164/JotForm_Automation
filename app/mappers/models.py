@@ -201,7 +201,15 @@ class Documents:
 
     @staticmethod
     def _doc_present(doc: Any, doc_type: str = "", submission_id: str = "") -> str:
-        """Return '✅' if present, '❌' if missing."""
+        """Return '✅' if present, '🕓' if received awaiting review, '❌' if missing.
+
+        v0.7: the manifest branch previously called ``json.loads`` without an
+        import — the NameError was swallowed and reconciled documents NEVER
+        showed as present. It now delegates to the single alias-aware lookup
+        in app.documents.storage.
+        """
+        if isinstance(doc, str) and doc.strip() == "🕓":
+            return "🕓"
         present = False
         if doc is not None:
             if isinstance(doc, bool):
@@ -209,19 +217,18 @@ class Documents:
             elif isinstance(doc, dict):
                 present = bool(doc.get("present") or doc.get("url") or doc.get("local_path"))
             else:
-                present = str(doc).strip() and str(doc).strip() != "❌"
+                present = bool(str(doc).strip()) and str(doc).strip() != "❌"
         if present:
             return "✅"
-            
+
         if submission_id and doc_type:
             try:
-                from app.config import settings
-                manifest_path = settings.documents_dir / submission_id / "_manifest.json"
-                if manifest_path.exists():
-                    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-                    status = manifest.get("documents", {}).get(doc_type, {}).get("status")
-                    if status == "present":
-                        return "✅"
+                from app.documents.storage import manifest_status
+                status = manifest_status(submission_id, doc_type)
+                if status == "present":
+                    return "✅"
+                if status == "needs_review":
+                    return "🕓"
             except Exception:
                 pass
         return "❌"
@@ -302,6 +309,9 @@ class BusinessSubmission:
     landlord:        Person | None  = None
     documents:       Documents      = field(default_factory=Documents)
     submission_id:   str = ""
+    # Supplemental (add-on) services — list of SupplementalService dicts
+    # (see app/mappers/supplemental_services.py). JSON-safe by construction.
+    supplemental_services: list = field(default_factory=list)
 
     # ── Serialization ─────────────────────────────────────────────────────────
 
@@ -319,6 +329,7 @@ class BusinessSubmission:
             "landlord":        self.landlord.to_dict()        if self.landlord         else None,
             "documents":       self.documents.to_dict(self.submission_id),
             "submission_id":   self.submission_id,
+            "supplemental_services": list(self.supplemental_services),
         }
 
     @classmethod
@@ -342,6 +353,7 @@ class BusinessSubmission:
             landlord        = _person("landlord"),
             documents       = Documents.from_dict(d.get("documents", {})),
             submission_id   = d.get("submission_id", ""),
+            supplemental_services = list(d.get("supplemental_services") or []),
         )
 
     # ── Fixed operator-facing summary ─────────────────────────────────────────
@@ -480,6 +492,14 @@ class BusinessSubmission:
             "תעודת_התאגדות":     _doc(ds.corp_cert,      "corp_cert"),
             "נסח_טאבו":          _doc(ds.tabu,           "tabu"),
         }
+
+        # ── 11b. Supplemental services — shown when any were detected ─────
+        if self.supplemental_services:
+            summary["שירותים_נוספים"] = {
+                (s.get("label_he") or s.get("key", "")): "✅"
+                for s in self.supplemental_services
+                if isinstance(s, dict) and s.get("selected", True)
+            }
 
         # ── 12. Payment — ALWAYS shown ────────────────────────────────────
         summary["פרטי_תשלום"] = {

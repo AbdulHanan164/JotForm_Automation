@@ -10,6 +10,7 @@ from typing import TypedDict, Any
 
 from app.documents.contracts import FileAnswer
 from app.documents import storage
+from app.core import doc_types as _dt
 
 logger = logging.getLogger("webhook.reconciliation")
 
@@ -312,15 +313,11 @@ class GeminiVisionClassifier(DocumentClassifier):
     # Supported file formats
     _SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".heic", ".webp", ".gif", ".pdf"}
 
-    # Canonical document types the model is allowed to return
-    _VALID_TYPES = {
-        "id_photo", "lease_contract", "arnona_bill",
-        "water_bill", "water_meter",
-        "electricity_bill", "electricity_meter",
-        "gas_bill", "gas_meter",
-        "tabu_document", "sale_contract",
-        "corp_cert", "signature",
-    }
+    # Spellings the model is allowed to return — canonical types plus the
+    # aliases the vision prompt has historically used (e.g. "tabu_document").
+    # Everything is normalized via app.core.doc_types.canonicalize() before
+    # it reaches a manifest.
+    _VALID_TYPES = set(_dt.CANONICAL_TYPES) | set(_dt.ALIASES)
 
     # Classification prompt — bilingual (Hebrew + English) for maximum accuracy
     # on Israeli real-estate documents.
@@ -718,7 +715,10 @@ def download_and_merge_files(
             continue
             
         res = pipeline.classify(f_path, context)
-        doc_type = res["document_type"]
+        # SINGLE normalization choke point: manifests only ever store
+        # canonical spellings ("tabu", never "tabu_document"). Unknown
+        # classifier output degrades to "" → the _unmapped path below.
+        doc_type = _dt.canonicalize(res["document_type"])
         ext = src.suffix.lower()
         
         # Decide status and target filename based on classifier type and confidence
@@ -814,74 +814,72 @@ def update_review_item_after_merge(orig_sub_id: str) -> None:
     """
     Loads ReviewItem, updates present documents, recalculates missing,
     re-drafts missing email, and saves it.
+
+    v0.7 fixes:
+      * Alias-aware manifest lookup (storage.manifest_status) — a file stored
+        as "tabu_document" now upgrades the "tabu" requirement.
+      * A needs_review follow-up upload no longer DOWNGRADES a document that
+        was already present (pre-v0.7 it flipped ✅ → ❌).
+      * needs_review is displayed as "🕓" (received, awaiting operator
+        verification) instead of pretending the file doesn't exist.
     """
     from app.review import queue as Q
     from app.mappers.models import BusinessSubmission
-    from app.mappers.missing_detector import detect_missing
+    from app.rules.requirements import detect_missing
     from app.services.arnona.service import ArnonaService
-    from app.documents.storage import hebrew_label_for
-    
+    from app.documents.storage import hebrew_label_for, manifest_status, read_manifest
+
     item = Q.load(orig_sub_id)
     if not item:
         return
-        
-    # Read manifest
-    from app.config import settings
-    manifest_path = settings.documents_dir / orig_sub_id / "_manifest.json"
-    if not manifest_path.exists():
+
+    if not read_manifest(orig_sub_id):
         return
-        
-    try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except Exception:
-        return
-        
-    docs_manifest = manifest.get("documents", {})
-    
-    # Get status of each doc_type
+
     docs_bd = item.business_data.setdefault("documents", {})
     summary_docs = item.summary.setdefault("מסמכים", {})
-    
+
     present_count = 0
     total_count = 0
-    
-    for doc_type in ["id_photo", "lease_contract", "signature", "arnona_bill", "corp_cert", "tabu"]:
-        entry = docs_manifest.get(doc_type)
-        if entry:
-            status = entry.get("status")
-            heb_label = hebrew_label_for(doc_type)
-            
-            if status == "present":
-                docs_bd[doc_type] = "✅"
-                if heb_label:
-                    summary_docs[heb_label] = "✅"
-                present_count += 1
-            else:
-                # needs_review or missing
-                docs_bd[doc_type] = "❌"
-                if heb_label:
-                    summary_docs[heb_label] = "❌"
-            total_count += 1
-            
-    if present_count == total_count:
+
+    for doc_type in _dt.SUMMARY_TYPES:
+        status = manifest_status(orig_sub_id, doc_type)
+        if not status:
+            continue
+        heb_label = hebrew_label_for(doc_type)
+        total_count += 1
+
+        if status == "present":
+            docs_bd[doc_type] = "✅"
+            if heb_label:
+                summary_docs[heb_label] = "✅"
+            present_count += 1
+        elif docs_bd.get(doc_type) != "✅":
+            # needs_review — file received, operator verification pending.
+            # Never overwrite an already-present ✅.
+            docs_bd[doc_type] = "🕓"
+            if heb_label:
+                summary_docs[heb_label] = "🕓"
+
+    if total_count and present_count == total_count:
         item.documents_status = "ready"
     elif present_count > 0:
         item.documents_status = "partial"
     else:
         item.documents_status = "failed"
-        
-    # Recalculate missing detection
+
+    # Recalculate missing docs through the canonical engine (manifest-aware).
     bs = BusinessSubmission.from_dict(item.business_data)
     bs.submission_id = orig_sub_id
-    
+
     missing_res = detect_missing(bs)
     item.missing_docs = missing_res.get("missing_docs", [])
-    
+
     # Re-draft email
     arnona_svc = ArnonaService()
     new_email = arnona_svc.draft_email(item.summary, {"missing_info": item.missing_info, "missing_docs": item.missing_docs})
     item.draft_email = new_email
-    
+
     Q.save(item)
     logger.info("Updated original review item %s after document merge", orig_sub_id)
 
@@ -957,13 +955,20 @@ def reconcile_and_merge_for_original(orig_sub_id: str, parsed: dict[str, Any]) -
         )
         
         # Update parsed documents in-memory
+        # (pre-v0.7 this line raised NameError — hebrew_label_for was never
+        # imported in this function's scope — so the in-memory merge silently
+        # died inside the orchestrator's stage try/except on every match)
         for doc_type, entry in manifest.get("documents", {}).items():
             if entry.get("status") == "present":
-                heb_label = hebrew_label_for(doc_type)
+                heb_label = storage.hebrew_label_for(doc_type)
                 if heb_label:
+                    files = entry.get("files") or []
+                    # merged file entries carry local_path, not source_url
+                    first = files[0] if files else {}
                     parsed.setdefault("documents", {})[heb_label] = {
                         "present": True,
-                        "url": entry["files"][0]["source_url"] if entry["files"] else ""
+                        "url": first.get("source_url") or "",
+                        "local_path": first.get("local_path", ""),
                     }
                     
     # Re-build business data in parsed

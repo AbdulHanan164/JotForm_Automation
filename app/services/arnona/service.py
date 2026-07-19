@@ -11,7 +11,6 @@ from typing import Any
 from app.services.base.service import BaseService
 from app.services.arnona import field_map as fm
 from app.services.arnona import summary as sm
-from app.services.arnona import rules as rl
 from app.services.arnona.email_templates import draft_missing_info_email
 from app.services.arnona.conditional_logic import arnona_logic_engine
 from app.services.arnona.validators import ARNONA_VALIDATION_RULES
@@ -122,7 +121,7 @@ class ArnonaService(BaseService):
                 logger.warning("BusinessSubmission.to_summary_dict() failed: %s", exc)
         return sm.build(parsed)
 
-    # ── Step 3: detect missing (BusinessSubmission-first, raw fallback) ──────
+    # ── Step 3: detect missing (canonical engine — app/rules/requirements) ───
 
     def detect_missing(
         self,
@@ -133,51 +132,33 @@ class ArnonaService(BaseService):
         if visibility is None:
             visibility = arnona_logic_engine.evaluate(parsed)
 
-        bd = parsed.get("_business")
-        if bd:
-            try:
-                from app.mappers.models import BusinessSubmission
-                from app.mappers.missing_detector import detect_missing as _biz_detect
+        from app.mappers.models import BusinessSubmission
+        from app.rules.requirements import detect_missing as _detect
+
+        try:
+            bd = parsed.get("_business")
+            if bd:
                 bs = BusinessSubmission.from_dict(bd)
-                return _biz_detect(bs, visibility)
-            except Exception as exc:
-                logger.warning("BusinessSubmission missing-detect failed, using raw fallback: %s", exc)
-
-        # ── Raw fallback (YAML-driven services / mapper failure) ──────────────
-        missing_info: list[dict] = []
-        missing_docs: list[dict] = []
-
-        for rule in rl.INFO_RULES:
-            if not rule["required"](parsed):
-                continue
-            field_label = rule.get("label", "")
-            if visibility.get(field_label) is False:
-                continue
-            if not rule["check"](parsed):
-                missing_info.append({
-                    "id":                 rule["id"],
-                    "label":              rule["label"],
-                    "reason":             rule["reason"](parsed),
-                    "rule_triggered":     rule["id"],
-                    "was_field_visible":  visibility.get(field_label, True),
-                })
-
-        for rule in rl.DOC_RULES:
-            if not rule["required"](parsed):
-                continue
-            if not rule["check"](parsed):
-                missing_docs.append({
-                    "id":             rule["id"],
-                    "label":          rule["label"],
-                    "reason":         rule["reason"](parsed),
-                    "rule_triggered": rule["id"],
-                })
-
-        return {
-            "is_complete":  (not missing_info and not missing_docs),
-            "missing_info": missing_info,
-            "missing_docs": missing_docs,
-        }
+            else:
+                # Mapper didn't run in parse_fields (exception was logged
+                # there) — build directly; build_from_parsed is defensive and
+                # works on any section-keyed dict.
+                from app.mappers.business_mapper import build_from_parsed
+                bs = build_from_parsed(parsed)
+            return _detect(bs, visibility)
+        except Exception as exc:
+            # No divergent fallback rule set anymore (v0.7): a failure here is
+            # a bug to fix, not something to paper over with different rules.
+            # Surface it loudly and mark the submission incomplete so it lands
+            # in the operator queue instead of silently passing as complete.
+            logger.error("Missing-detection engine failed for %s: %s",
+                         parsed.get("system", {}).get("submission_id", "?"), exc)
+            return {
+                "is_complete":  False,
+                "missing_info": [],
+                "missing_docs": [],
+                "engine_error": str(exc),
+            }
 
     # ── Step 4: cross-document validation (BusinessSubmission-first) ──────────
 

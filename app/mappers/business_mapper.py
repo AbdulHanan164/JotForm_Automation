@@ -68,61 +68,6 @@ def _is_company(basic: dict) -> bool:
     return "חברה" in ptype or "עסק" in ptype or "תאגיד" in ptype
 
 
-def _detect_transaction_type(basic: dict, package: str, transfer_to: str) -> str:
-    """
-    Derive transaction type from Q3 (סוג_מעבר), Q6 (סוג_לקוח), Q7 (סוג_משכיר),
-    and Q209 (שותפים) instead of payment metadata. Falls back to package description
-    and transfer_to field if Q3 is not populated to maintain backward compatibility.
-    """
-    move_type = _s(basic.get("סוג_מעבר", ""))
-    customer_type = _s(basic.get("סוג_לקוח", ""))
-    landlord_role = _s(basic.get("סוג_משכיר", ""))
-    partner_type = _s(basic.get("שותפים", ""))
-
-    if move_type == "מתחיל שכירות":
-        if "חברה" in customer_type or "עסק" in customer_type or "תאגיד" in customer_type:
-            return "rental_start_company"
-        if partner_type == "שותפים":
-            return "rental_start_roommates"
-        if partner_type == "זוג נשוי":
-            return "rental_start_couple"
-        return "rental_start_single"
-
-    elif move_type == "מסיים שכירות":
-        if "חברה" in customer_type or "עסק" in customer_type or "תאגיד" in customer_type:
-            return "rental_termination_company"
-        if partner_type == "שותפים":
-            return "rental_termination_roommates"
-        if partner_type == "זוג נשוי":
-            return "rental_termination_couple"
-        return "rental_termination_single"
-
-    elif move_type == "בעל בית":
-        if landlord_role == "משכיר":
-            if partner_type == "שותפים":
-                return "landlord_rental_roommates"
-            if partner_type == "זוג נשוי":
-                return "landlord_rental_couple"
-            return "landlord_rental_single"
-        elif landlord_role == "קונה":
-            return "sale_purchase"
-        elif landlord_role == "מוכר":
-            return "sale_transfer"
-        elif landlord_role == "חוזר לנכס":
-            return "owner_return"
-
-    # Fallback to old package-based string matching if Q3/Q7 are not populated
-    pkg = (package or "").lower()
-    if "גמר חשבון" in pkg:
-        return "account_closure"
-    if "קניה" in pkg or "מכירה" in pkg or "תאגיד" in pkg:
-        return "sale_transfer"
-    tf = (transfer_to or "")
-    if "בעל הנכס" in tf or "בעל_הנכס" in tf:
-        return "owner_transfer"
-    return "rental_transfer"
-
-
 def _build_address(city: str, prop: dict) -> str:
     """Assemble a human-readable address from property section fields."""
     street    = _s(prop.get("רחוב", ""))
@@ -161,9 +106,15 @@ def build_from_parsed(parsed: dict[str, Any]) -> BusinessSubmission:
     payment  = parsed.get("payment", {})
 
     # ── Submission metadata ───────────────────────────────────────────────────
+    from app.rules.transaction import detect_transaction_type, role_routing
+
     package     = _coalesce(fhs.get("package"), payment.get("שם_שירות"))
     transfer_to = _s(basic.get("לאן_להעביר", ""))
-    txn_type    = _detect_transaction_type(basic, package, transfer_to)
+    txn_type    = detect_transaction_type(
+        basic, package, transfer_to,
+        partner_section=partner,
+        unmapped=parsed.get("_unmapped", {}),
+    )
 
     raw_amount = payment.get("סכום", "")
     try:
@@ -187,46 +138,21 @@ def build_from_parsed(parsed: dict[str, Any]) -> BusinessSubmission:
         transfer_to         = transfer_to,
     )
 
-    move_type = _s(basic.get("סוג_מעבר", ""))
-    landlord_role = _s(basic.get("סוג_משכיר", ""))
-
-    # Determine raw source sections
-    inc_src = customer
-    part_src = partner
-    out_src = outgoing
-    ll_src = landlord
-
-    if move_type == "מתחיל שכירות":
-        inc_src = customer
-        part_src = partner
-        out_src = outgoing
-        ll_src = landlord
-    elif move_type == "מסיים שכירות":
-        inc_src = {}
-        part_src = partner
-        out_src = customer
-        ll_src = landlord
-    elif move_type == "בעל בית":
-        if landlord_role == "משכיר":
-            inc_src = partner
-            part_src = {}
-            out_src = outgoing
-            ll_src = customer
-        elif landlord_role == "קונה":
-            inc_src = customer
-            part_src = partner
-            out_src = outgoing
-            ll_src = {}
-        elif landlord_role == "מוכר":
-            inc_src = outgoing
-            part_src = partner
-            out_src = customer
-            ll_src = {}
-        elif landlord_role == "חוזר לנכס":
-            inc_src = customer
-            part_src = partner
-            out_src = outgoing
-            ll_src = customer
+    # Role routing: which raw section feeds which business role.
+    # Single table in app/rules/transaction.py — shared with the classifier so
+    # classification and role assignment can never drift apart (pre-v0.7 this
+    # branching was duplicated here).
+    _sections = {
+        "customer": customer, "partner": partner,
+        "outgoing": outgoing, "landlord": landlord,
+    }
+    inc_name, part_name, out_name, ll_name = role_routing(
+        basic.get("סוג_מעבר", ""), basic.get("סוג_משכיר", "")
+    )
+    inc_src  = _sections.get(inc_name, {})  if inc_name  else {}
+    part_src = _sections.get(part_name, {}) if part_name else {}
+    out_src  = _sections.get(out_name, {})  if out_name  else {}
+    ll_src   = _sections.get(ll_name, {})   if ll_name   else {}
 
     # ── Incoming tenant ───────────────────────────────────────────────────────
     in_name = _coalesce(fhs.get("incoming_full_name"), _join_name(inc_src))
@@ -337,6 +263,10 @@ def build_from_parsed(parsed: dict[str, Any]) -> BusinessSubmission:
         tabu           = docs.get("נסח_טאבו"),
     )
 
+    # ── Supplemental services (v0.7 — address update etc.) ───────────────────
+    from app.mappers.supplemental_services import parse_supplemental, serialize
+    supplemental = serialize(parse_supplemental(parsed))
+
     sub_id = parsed.get("system", {}).get("submission_id", "") or parsed.get("submission_id", "")
     return BusinessSubmission(
         submission      = submission_meta,
@@ -350,4 +280,5 @@ def build_from_parsed(parsed: dict[str, Any]) -> BusinessSubmission:
         landlord        = landlord_person,
         documents       = documents,
         submission_id   = sub_id,
+        supplemental_services = supplemental,
     )

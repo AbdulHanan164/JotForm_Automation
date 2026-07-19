@@ -101,13 +101,16 @@ class TestYamlFieldMapWithCustomFile:
         original = fm_mod._YAML_CONFIG
         try:
             fm_mod._YAML_CONFIG = yaml_file
-            field_map_data, placeholder_labels = fm_mod._load_yaml_field_map()
+            field_map_data, placeholder_labels, unresolved = fm_mod._load_yaml_field_map()
         finally:
             fm_mod._YAML_CONFIG = original
 
         assert "q1_realId" in field_map_data
         assert field_map_data["q1_realId"]["verified"] is True
-        assert "q2_placeholder" in field_map_data
+        # v0.7: fabricated ids (containing "placeholder") are quarantined —
+        # excluded from the active map, reported in the unresolved list.
+        assert "q2_placeholder" not in field_map_data
+        assert any(u["jotform_id"] == "q2_placeholder" and u["fabricated"] for u in unresolved)
         assert "שם_פרטי" in placeholder_labels
         assert "עיר" not in placeholder_labels   # verified=True → not placeholder
 
@@ -117,13 +120,13 @@ class TestYamlFieldMapWithCustomFile:
         original = fm_mod._YAML_CONFIG
         try:
             fm_mod._YAML_CONFIG = tmp_path / "nonexistent_arnona.yaml"
-            field_map_data, placeholder_labels = fm_mod._load_yaml_field_map()
+            field_map_data, placeholder_labels, unresolved = fm_mod._load_yaml_field_map()
         finally:
             fm_mod._YAML_CONFIG = original
 
-        assert isinstance(field_map_data, dict)
-        assert isinstance(placeholder_labels, list)
-        # With no YAML file, returns empty (falls back to Python defaults in FIELD_MAP)
+        assert field_map_data == {}
+        assert placeholder_labels == []
+        assert unresolved == []
 
 
 # ── Integration: admin endpoint ───────────────────────────────────────────────

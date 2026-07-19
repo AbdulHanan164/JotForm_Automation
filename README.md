@@ -207,17 +207,19 @@ Each submission is stored in `data/submissions/` as a timestamped JSON file:
 
 ---
 
-## Future Integrations
+## Architecture (v0.7)
 
-The following stubs exist in [`app/services/submission_service.py`](app/services/submission_service.py) and are ready to implement:
+Canonical layers (full picture: `docs/ARCHITECTURE_v0.7.md`):
 
-| Integration     | Stub function          | Env variable                     |
-|-----------------|------------------------|----------------------------------|
-| HubSpot CRM     | `push_to_hubspot()`    | `HUBSPOT_API_KEY`                |
-| OpenAI / NVIDIA | `enrich_with_ai()`     | `OPENAI_API_KEY` / `NVIDIA_API_KEY` |
-| Google Drive    | `upload_to_google_drive()` | `GOOGLE_DRIVE_CREDENTIALS_PATH` |
+| Layer | Location | Responsibility |
+|-------|----------|----------------|
+| Core vocabulary | `app/core/` | Document types + aliases, transaction codes/traits/labels |
+| Rule engines | `app/rules/` | Missing info/docs requirements, transaction classification |
+| Mapping | `config/field_maps/arnona.yaml` + `app/services/arnona/field_map.py` | JotForm field IDs → semantic labels (unresolved IDs: `docs/UNRESOLVED_MAPPINGS.md`) |
+| Business model | `app/mappers/` | `BusinessSubmission`, business mapper, supplemental services |
 
-To activate an integration, fill in the relevant key in `.env` and implement the stub function.
+Work that still requires API keys / a recovered `.env` is tracked in
+`docs/INTEGRATION_TODO.md`.
 
 ---
 
