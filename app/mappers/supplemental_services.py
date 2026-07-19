@@ -17,10 +17,11 @@ Detection is token-based and DATA-DRIVEN: adding a new supplemental service is
 one REGISTRY entry, no code. Values are matched with the same normalization
 used by the transaction classifier (bidi marks, punctuation, whitespace).
 
+Field IDs for the ancillary-services multi-select (q568/q569/q630 →
+שירותים_נוספים) were verified against all 58 production submissions from the
+2026-07 server backup — see config/field_maps/arnona.yaml.
+
 TODO (requires .env / external integration — see docs/INTEGRATION_TODO.md):
-  * Verified JotForm field IDs for the supplemental-services question(s) —
-    add them to config/field_maps/arnona.yaml with section "basic" and the
-    label "שירותים_נוספים"; the parser below already prefers that label.
   * Fulfillment integrations (e.g. actually submitting the address update to
     the authority) — out of scope for the webhook service today.
 """
@@ -107,13 +108,38 @@ class SupplementalService:
 
 # ── Parser ────────────────────────────────────────────────────────────────────
 
+# Answers that NAME a service while declining it. The production form's
+# ancillary multi-select offers explicit decline options like
+# "לא תודה - עדכון כתובת בתעודת זהות" — validated against the 2026-07
+# production corpus (20/58 submissions declined this way).
+
+
+def _is_negated(norm: str) -> bool:
+    """True for answers that decline the named service.
+
+    Word-boundary aware: "אין"/"ללא"/"לא" must be whole words — a bare
+    substring test would match "אין" inside "אינטרנט" and kill legitimate
+    internet/TV detection.
+    """
+    padded = f" {norm} "
+    return "לא תודה" in norm or any(f" {w} " in padded for w in ("ללא", "אין", "לא"))
+
+
 def _candidate_texts(parsed: dict[str, Any]) -> list[tuple[str, str]]:
-    """(source, text) pairs to scan, most-authoritative first."""
+    """(source, text) pairs to scan, most-authoritative first.
+
+    ONLY selection-type sources are scanned. Scanning ``_unmapped`` was tried
+    and REMOVED after historical replay over 58 production submissions showed
+    a 100% false-positive rate: JotForm posts static text-widget content
+    (e.g. q620 "עדכון כתובת בתעודת זהות 79 ₪", a price label) with every
+    submission, purchased or not. The real answer is the mapped
+    שירותים_נוספים multi-select (q568/q569/q630 in arnona.yaml).
+    """
     out: list[tuple[str, str]] = []
     basic   = parsed.get("basic", {}) or {}
     payment = parsed.get("payment", {}) or {}
 
-    # 1. A dedicated mapped field, once its JotForm ID is verified (TODO above)
+    # 1. The dedicated ancillary-services multi-select (verified field IDs)
     dedicated = basic.get("שירותים_נוספים")
     if dedicated:
         vals = dedicated if isinstance(dedicated, list) else [dedicated]
@@ -129,12 +155,6 @@ def _candidate_texts(parsed: dict[str, Any]) -> list[tuple[str, str]]:
     if payment.get("מוצרים"):
         out.append(("payment.מוצרים", str(payment["מוצרים"])))
 
-    # 3. Unmapped webhook values — a supplemental question without a verified
-    #    field ID must still surface to the operator.
-    for qid, value in (parsed.get("_unmapped", {}) or {}).items():
-        if isinstance(value, str) and value.strip():
-            out.append((f"_unmapped:{qid}", value))
-
     return out
 
 
@@ -145,6 +165,8 @@ def parse_supplemental(parsed: dict[str, Any]) -> list[SupplementalService]:
         norm = normalize(text).lower()
         if not norm:
             continue
+        if _is_negated(norm):
+            continue   # "לא תודה - עדכון כתובת..." names the service to DECLINE it
         for definition in REGISTRY:
             if definition.key in found:
                 continue

@@ -46,6 +46,30 @@ fields:
     type: multi
     verified: true                     # ["מים","חשמל","ארנונה"]
 
+  # Ancillary (supplemental) services multi-select — "שירותים נלווים".
+  # Three flow-specific QIDs share one label (content-wins merge in
+  # parse_fields). Verified against all 58 production submissions in the
+  # 2026-07 server backup: answers are lists like
+  # ["עדכון כתובת בתעודת זהות 79 ₪"] (purchased) or
+  # ["לא תודה - עדכון כתובת בתעודת זהות", ...] (declined).
+  - jotform_id: "q568_input568"
+    label: "שירותים_נוספים"
+    section: basic
+    type: multi
+    verified: true                     # move-in flow (32/58 submissions)
+
+  - jotform_id: "q569_input569"
+    label: "שירותים_נוספים"
+    section: basic
+    type: multi
+    verified: true                     # exit flow (12/58 submissions)
+
+  - jotform_id: "q630_input630"
+    label: "שירותים_נוספים"
+    section: basic
+    type: multi
+    verified: true                     # landlord/owner flow (1/58 submissions)
+
   - jotform_id: "q194_input194"
     label: "תאריך_יציאה"
     section: basic
