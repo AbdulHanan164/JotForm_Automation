@@ -116,11 +116,13 @@ def build_from_pipeline(result: Any) -> ReviewItem:
 
     # Quick-view: prefer business_data (strongly-typed), fall back to summary
     incoming = bd.get("incoming_tenant") or {}
+    outgoing = bd.get("outgoing_tenant") or {}
     prop_bd  = bd.get("property") or {}
     txn_bd   = bd.get("submission") or {}
 
     customer_name  = (
         incoming.get("full_name")
+        or outgoing.get("full_name")
         or summary.get("דייר_נכנס", {}).get("שם", "")
     )
     customer_phone = (
