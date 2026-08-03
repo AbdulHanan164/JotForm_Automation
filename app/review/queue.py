@@ -127,10 +127,12 @@ def build_from_pipeline(result: Any) -> ReviewItem:
     )
     customer_phone = (
         incoming.get("phone")
+        or outgoing.get("phone")
         or summary.get("דייר_נכנס", {}).get("טלפון", "")
     )
     customer_email = (
         incoming.get("email")
+        or outgoing.get("email")
         or summary.get("דייר_נכנס", {}).get("אימייל", "")
     )
     property_address = (
