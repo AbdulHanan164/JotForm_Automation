@@ -96,31 +96,48 @@ def download_submission_documents(
                 continue
 
             url = value.get("url", "")
-            if not url or not url.startswith("http"):
+            # Multi-file upload fields carry every URL in "urls"; "url" remains
+            # the first one for single-file consumers.
+            urls = [u for u in (value.get("urls") or []) if isinstance(u, str)]
+            if not urls and url:
+                urls = [url]
+            urls = [u for u in urls if u.startswith("http")]
+            if not urls:
                 continue  # not a file URL — skip
 
             if value.get("local_path"):
                 continue  # already downloaded
 
-            # Download
-            result = _download_file(url, docs_dir, label)
-            manifest[f"{section_name}.{label}"] = result
+            local_paths: list[str] = []
+            for idx, one_url in enumerate(urls):
+                # The first file keeps the plain filename and manifest key, so
+                # single-file behavior is byte-for-byte unchanged. Extras are
+                # suffixed so nothing overwrites and every file is recorded.
+                name_suffix = "" if idx == 0 else f"_{idx + 1}"
+                key = (f"{section_name}.{label}" if idx == 0
+                       else f"{section_name}.{label}#{idx + 1}")
+                result = _download_file(one_url, docs_dir, label,
+                                        name_suffix=name_suffix)
+                manifest[key] = result
 
-            if result.get("local_path"):
-                value["local_path"] = result["local_path"]
-                downloaded += 1
-                logger.info(
-                    "Downloaded %s.%s → %s (%d bytes)",
-                    section_name, label,
-                    result["local_path"],
-                    result.get("size_bytes", 0),
-                )
-            else:
-                failed += 1
-                logger.warning(
-                    "Failed to download %s.%s from %s: %s",
-                    section_name, label, url, result.get("error", "unknown"),
-                )
+                if result.get("local_path"):
+                    local_paths.append(result["local_path"])
+                    downloaded += 1
+                    logger.info(
+                        "Downloaded %s → %s (%d bytes)",
+                        key, result["local_path"], result.get("size_bytes", 0),
+                    )
+                else:
+                    failed += 1
+                    logger.warning(
+                        "Failed to download %s from %s: %s",
+                        key, one_url, result.get("error", "unknown"),
+                    )
+
+            if local_paths:
+                value["local_path"] = local_paths[0]
+                if len(local_paths) > 1:
+                    value["local_paths"] = local_paths
 
     # Write manifest
     manifest_path = docs_dir / "_manifest.json"
@@ -242,7 +259,8 @@ def _fetch_bytes(url: str) -> tuple[bytes, str]:
     return data, content_type
 
 
-def _download_file(url: str, dest_dir: Path, label: str) -> dict[str, Any]:
+def _download_file(url: str, dest_dir: Path, label: str,
+                   name_suffix: str = "") -> dict[str, Any]:
     """
     Download a single file.
 
@@ -272,7 +290,7 @@ def _download_file(url: str, dest_dir: Path, label: str) -> dict[str, Any]:
 
             # Sanitize label for use as filename
             safe_label = _safe_filename(label)
-            local_path = dest_dir / f"{safe_label}{ext}"
+            local_path = dest_dir / f"{safe_label}{name_suffix}{ext}"
 
             # Read with size limit
             data = _read_with_limit(resp)
@@ -307,7 +325,10 @@ def _with_api_key(url: str) -> str:
     try:
         from urllib.parse import urlsplit, urlunsplit, quote
         parts = urlsplit(url)
-        quoted_path = quote(parts.path, safe='/')
+        # safe includes '%' so an already-encoded path is not double-encoded
+        # (%D7%90 must not become %25D7%2590); literal spaces and Hebrew in a
+        # raw JotForm filename are still encoded correctly.
+        quoted_path = quote(parts.path, safe='/%')
         url = urlunsplit((parts.scheme, parts.netloc, quoted_path, parts.query, parts.fragment))
     except Exception:
         pass

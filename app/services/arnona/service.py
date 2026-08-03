@@ -211,6 +211,17 @@ class ArnonaService(BaseService):
         if ftype == "date":
             return format_date(value)
         if ftype in ("file", "signature"):
+            # Multi-file upload: JotForm sends a LIST of URLs. safe_str() joins
+            # a list with ", ", producing one comma-separated string that is not
+            # a valid URL — the downloader then requested "url1, url2" and lost
+            # BOTH files. Keep every URL: "url" stays the first one so all
+            # existing single-file consumers are unchanged, and "urls" carries
+            # the full list for the downloader.
+            if isinstance(value, (list, tuple)):
+                _urls = [safe_str(v).strip() for v in value]
+                _urls = [u for u in _urls if u.startswith("http")]
+                if _urls:
+                    return {"present": True, "url": _urls[0], "urls": _urls}
             sv = safe_str(value)
             if is_base64_image(sv):
                 return {"present": True, "url": ""}
