@@ -54,6 +54,12 @@ async def lifespan(app: FastAPI):
     try:
         from app.services.arnona.field_map import check_field_map_status
         fm = check_field_map_status()
+        # Field map vs live JotForm schema — a drift is reported, never silent.
+        try:
+            from app.core.fieldmap_validation import validate_arnona, log_summary
+            log_summary(validate_arnona())
+        except Exception as _exc:
+            logger.warning("Field-map validation skipped: %s", _exc)
         if fm["status"] != "ok":
             logger.warning(
                 "Field map: %d/%d arnona field IDs are unverified placeholders. "

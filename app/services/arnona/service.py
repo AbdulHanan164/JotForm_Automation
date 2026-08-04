@@ -19,7 +19,13 @@ from app.pipeline.validator import ValidationEngine, ValidationIssue
 
 logger = logging.getLogger("webhook")
 
-FORM_ID = "250201745267957"
+def _registry_form_id() -> str:
+    """The form this service handles, resolved from configuration."""
+    from app.core.forms import main_form_id
+    return main_form_id()
+
+
+FORM_ID = _registry_form_id()
 
 _validation_engine          = ValidationEngine(ARNONA_VALIDATION_RULES)
 _business_validation_engine = ValidationEngine(BUSINESS_VALIDATION_RULES)

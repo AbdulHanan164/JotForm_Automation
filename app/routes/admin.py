@@ -34,11 +34,15 @@ logger = logging.getLogger("admin")
 # Type alias for the auth dependency
 _Auth = Annotated[str, Depends(require_operator)]
 
-# All registered form IDs (Python-coded + YAML)
-_KNOWN_FORM_IDS = [
-    "251955479892982",   # arnona transfer
-    # Add more as you create them
-]
+# All registered form IDs — DERIVED from configuration, never hand-maintained.
+# See app/core/forms.py: settings + config/services/*.yaml + config/field_maps/*.yaml.
+def _known_form_ids() -> list[str]:
+    from app.core.forms import known_form_ids
+    return known_form_ids()
+
+
+# Kept as a module attribute because app/main.py imports this name.
+_KNOWN_FORM_IDS = _known_form_ids()
 
 
 # ── JotForm Sync ──────────────────────────────────────────────────────────────
@@ -97,7 +101,7 @@ def sync_all_forms(force: bool = False, _op: _Auth = None):
         )
 
     sync    = FormSync(client)
-    results = sync.sync_all(_KNOWN_FORM_IDS, force=force)
+    results = sync.sync_all(_known_form_ids(), force=force)
 
     return {
         "synced": [r.to_dict() for r in results if r.success],
@@ -227,3 +231,20 @@ def arnona_fieldmap_status(_op: _Auth = None):
             status_code=500,
             detail=f"Could not load field map status: {exc}",
         )
+
+
+@router.get("/fieldmap/validate",
+            summary="Validate the field map against the cached JotForm schema")
+def fieldmap_validate(_op: _Auth = None):
+    """Compare config/field_maps/arnona.yaml with the JotForm form definition.
+
+    Reports missing, renamed, duplicate, obsolete and unmapped-required fields
+    plus any label the code depends on that the map does not define, so a form
+    change surfaces as a report instead of silently parsing empty.
+
+    Statuses: "ok" | "warning" | "error" | "unknown" (no cached schema yet —
+    POST /admin/sync/{form_id} first).
+    """
+    from app.core.fieldmap_validation import validate_arnona
+    from app.core import forms as form_registry
+    return {"registry": form_registry.describe(), "validation": validate_arnona()}

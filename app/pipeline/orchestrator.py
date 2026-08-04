@@ -147,6 +147,11 @@ def run_pipeline(
         )
         from app.services.arnona.field_map import FIELD_MAP
 
+        from app.config import settings as _cfg
+        if not _cfg.enable_schema_visibility:
+            raise RuntimeError(
+                "schema visibility disabled (set ENABLE_SCHEMA_VISIBILITY=true "
+                "to use JotForm's own conditional logic)")
         schema = get_schema(result.form_id)
         if schema is None:
             raise FileNotFoundError(f"No cached schema for form {result.form_id}")
@@ -216,7 +221,8 @@ def run_pipeline(
     result.business_data = result.parsed.get("_business", {})
 
     # ── Stage 4.8: Local Missing Documents Reconciliation ─────────────────────
-    if result.submission_id != "unknown" and result.form_id == "250201745267957":
+    from app.core import forms as _forms
+    if result.submission_id != "unknown" and result.form_id == _forms.main_form_id():
         try:
             from app.pipeline.reconciliation_merge import reconcile_and_merge_for_original
             reconcile_and_merge_for_original(result.submission_id, result.parsed)

@@ -91,8 +91,9 @@ async def receive_webhook(
         ""
     )
 
-    # ── Handle Missing Documents Form (251323124205946) ───────────────────────
-    if form_id == "251323124205946":
+    # ── Handle the Missing Documents follow-up form (id from the registry) ───
+    from app.core import forms as _forms
+    if form_id and form_id == _forms.missing_docs_form_id():
         logger.info("Processing Missing Documents Form submission %s in background", submission_id)
         from app.pipeline.reconciliation_merge import reconcile_and_merge_for_missing_docs
         background_tasks.add_task(reconcile_and_merge_for_missing_docs, fields)

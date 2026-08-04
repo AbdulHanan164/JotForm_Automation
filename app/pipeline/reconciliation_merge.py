@@ -781,9 +781,10 @@ def download_and_merge_files(
         
         # Save to manifest
         if doc_type:
+            from app.core.forms import missing_docs_form_id
             doc_entry = manifest_data["documents"].setdefault(doc_type, {
                 "status": "missing",
-                "source_form": "251323124205946",
+                "source_form": missing_docs_form_id(),
                 "upload_date": datetime.now(timezone.utc).isoformat(),
                 "files": []
             })
@@ -792,7 +793,7 @@ def download_and_merge_files(
             if doc_entry["status"] != "present":
                 doc_entry["status"] = status
                 
-            doc_entry["source_form"] = "251323124205946"
+            doc_entry["source_form"] = missing_docs_form_id()
             doc_entry["upload_date"] = datetime.now(timezone.utc).isoformat()
             
             # Check if this file path is already in files list
