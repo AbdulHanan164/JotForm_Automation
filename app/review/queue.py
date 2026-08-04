@@ -120,18 +120,15 @@ def build_from_pipeline(result: Any) -> ReviewItem:
     prop_bd  = bd.get("property") or {}
     txn_bd   = bd.get("submission") or {}
 
-    # ONE primary contact person, identified by who is actually named, then
-    # every contact field is read from that same person. Falling back field by
-    # field previously mixed two participants: a phone from the incoming tenant
-    # next to an email from the outgoing one, both labelled "the customer".
-    # Terminations have no incoming tenant, so the outgoing tenant is primary.
+    # ONE primary contact person, resolved by app/core/contact.py — the single
+    # definition of who "the customer" is, shared with the draft-email greeting
+    # so the two can never disagree. Selection is by who is actually NAMED, so a
+    # termination stays on the outgoing tenant even when an incoming phone
+    # happens to be present.
+    from app.core.contact import primary_contact
     _legacy = summary.get("דייר_נכנס", {}) or {}
-    if (incoming.get("full_name") or "").strip():
-        _primary, _is_incoming = incoming, True
-    elif (outgoing.get("full_name") or "").strip():
-        _primary, _is_incoming = outgoing, False
-    else:
-        _primary, _is_incoming = {}, True
+    _primary, _primary_role = primary_contact(bd)
+    _is_incoming = _primary_role in ("incoming_tenant", "")
 
     customer_name = _primary.get("full_name") or ""
     customer_phone = _primary.get("phone") or ""

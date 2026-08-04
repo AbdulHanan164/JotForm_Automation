@@ -85,9 +85,15 @@ _ITEM_PRESENTATION: dict[str, tuple[str, str]] = {
 
 
 def _first_name(summary: dict[str, Any]) -> str:
-    customer = summary.get("דייר_נכנס", {})
-    full = customer.get("שם", "")
-    return full.split()[0] if full and full != "—" else ""
+    """First name of the PRIMARY customer, per app/core/contact.py.
+
+    Previously this read the incoming tenant only, so on a flow without one
+    (terminations, sale_transfer) it picked up the "not provided" placeholder
+    and the greeting rendered as "לא שלום". It now walks the same role order the
+    dashboard uses, so the greeting always addresses the person shown there.
+    """
+    from app.core.contact import first_name, primary_name_from_summary
+    return first_name(primary_name_from_summary(summary))
 
 
 def _present_item(item: dict[str, Any]) -> tuple[str, str]:
