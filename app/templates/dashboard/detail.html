@@ -118,6 +118,10 @@
     <h2>{{ t.sec_property }}</h2>
     <div class="kv"><span class="k">{{ t.lbl_address }}</span><span class="v">{{ property.full_address or item.property_address or "—" }}</span></div>
     <div class="kv"><span class="k">{{ t.lbl_city }}</span><span class="v">{{ property.city or "—" }}</span></div>
+    {% if arnona.property_number %}<div class="kv"><span class="k">{{ t.lbl_prop_no }}</span><span class="v">{{ arnona.property_number }}</span></div>{% endif %}
+    {% if arnona.identification_number %}<div class="kv"><span class="k">{{ t.lbl_ident_no }}</span><span class="v">{{ arnona.identification_number }}</span></div>{% endif %}
+    {% if arnona.payer_number or arnona.customer_account or arnona.resident_account %}<div class="kv"><span class="k">{{ t.lbl_cust_no }}</span><span class="v">{{ arnona.payer_number or arnona.customer_account or arnona.resident_account }}</span></div>{% endif %}
+    {% if water.property_number or water.payer_number %}<div class="kv"><span class="k">{{ t.lbl_water_no }}</span><span class="v">{{ water.property_number or water.payer_number }}</span></div>{% endif %}
   </div>
   <div class="card">
     <h2>{{ t.th_received }}</h2>

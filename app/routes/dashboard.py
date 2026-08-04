@@ -83,6 +83,8 @@ _T: dict[str, dict] = {
         "role_incoming": "דייר נכנס", "role_outgoing": "דייר יוצא",
         "role_partner": "שוכר שני", "role_landlord": "בעל הבית",
         "sec_property": "פרטי נכס", "lbl_address": "כתובת", "lbl_city": "עיר",
+        "lbl_prop_no": "מספר נכס", "lbl_ident_no": "מספר זיהוי נכס",
+        "lbl_cust_no": "מספר לקוח", "lbl_water_no": "מספר נכס מים",
         "lbl_movein": "תאריך כניסה", "lbl_moveout": "תאריך יציאה", "lbl_leaseend": "סיום חוזה",
         "sec_missing_info": "מידע חסר", "none_missing_info": "אין מידע חסר.",
         "sec_missing_docs": "מסמכים חסרים", "none_missing_docs": "אין מסמכים חסרים.",
@@ -125,6 +127,8 @@ _T: dict[str, dict] = {
         "role_incoming": "Incoming Tenant", "role_outgoing": "Outgoing Tenant",
         "role_partner": "Second Tenant", "role_landlord": "Landlord",
         "sec_property": "Property details", "lbl_address": "Address", "lbl_city": "City",
+        "lbl_prop_no": "Property number", "lbl_ident_no": "Property ID number",
+        "lbl_cust_no": "Customer number", "lbl_water_no": "Water property number",
         "lbl_movein": "Move-in date", "lbl_moveout": "Move-out date", "lbl_leaseend": "Lease end",
         "sec_missing_info": "Missing information", "none_missing_info": "No missing information.",
         "sec_missing_docs": "Missing documents", "none_missing_docs": "No missing documents.",
@@ -322,6 +326,8 @@ def review_detail(request: Request, submission_id: str, msg: str = "", err: str 
     partner  = bd.get("partner") or {}
     landlord = bd.get("landlord") or {}
     prop     = bd.get("property") or {}
+    arnona   = bd.get("arnona_accounts") or {}
+    water    = bd.get("water_accounts") or {}
     dates    = bd.get("dates") or {}
     sub      = bd.get("submission") or {}
 
@@ -343,6 +349,8 @@ def review_detail(request: Request, submission_id: str, msg: str = "", err: str 
         "partner":      partner,
         "landlord":     landlord,
         "property":     prop,
+        "arnona":       arnona,
+        "water":        water,
         "dates":        dates,
         "sub":          sub,
         "supplemental": supplemental,
