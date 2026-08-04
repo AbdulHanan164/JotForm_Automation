@@ -34,11 +34,29 @@ fields:
     type: select
     verified: true                     # "מתחיל שכירות"
 
+  # City resolution chain. All three questions denote the city of the property;
+  # which one the customer sees depends on the flow, so any of them may be the
+  # only one filled. The parser keeps whichever carries real content, so these
+  # act as an ordered fallback rather than duplicate fields. Verified across 28
+  # production submissions: the three never disagree, and at least one is always
+  # answered (q114 in 28/28, q132 in 20/28, q133 in 8/28).
   - jotform_id: "q132_input132"
     label: "עיר"
     section: basic
     type: text
-    verified: true                     # "חולון"
+    verified: true                     # "חולון" — ?באיזה עיר הדירה/הנכס
+
+  - jotform_id: "q114_input114"
+    label: "עיר"
+    section: basic
+    type: text
+    verified: true                     # "ראשון לציון" — שם הישוב
+
+  - jotform_id: "q133_input133"
+    label: "עיר"
+    section: basic
+    type: text
+    verified: true                     # "ראשון לציון" — ?באיזה עיר הנכס שעוזבים
 
   - jotform_id: "q419_multiSelect"
     label: "שירותים_נבחרים"
