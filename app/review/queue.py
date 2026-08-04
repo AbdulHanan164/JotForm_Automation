@@ -120,21 +120,28 @@ def build_from_pipeline(result: Any) -> ReviewItem:
     prop_bd  = bd.get("property") or {}
     txn_bd   = bd.get("submission") or {}
 
-    customer_name  = (
-        incoming.get("full_name")
-        or outgoing.get("full_name")
-        or summary.get("דייר_נכנס", {}).get("שם", "")
-    )
-    customer_phone = (
-        incoming.get("phone")
-        or outgoing.get("phone")
-        or summary.get("דייר_נכנס", {}).get("טלפון", "")
-    )
-    customer_email = (
-        incoming.get("email")
-        or outgoing.get("email")
-        or summary.get("דייר_נכנס", {}).get("אימייל", "")
-    )
+    # ONE primary contact person, identified by who is actually named, then
+    # every contact field is read from that same person. Falling back field by
+    # field previously mixed two participants: a phone from the incoming tenant
+    # next to an email from the outgoing one, both labelled "the customer".
+    # Terminations have no incoming tenant, so the outgoing tenant is primary.
+    _legacy = summary.get("דייר_נכנס", {}) or {}
+    if (incoming.get("full_name") or "").strip():
+        _primary, _is_incoming = incoming, True
+    elif (outgoing.get("full_name") or "").strip():
+        _primary, _is_incoming = outgoing, False
+    else:
+        _primary, _is_incoming = {}, True
+
+    customer_name = _primary.get("full_name") or ""
+    customer_phone = _primary.get("phone") or ""
+    customer_email = _primary.get("email") or ""
+    # The legacy summary block describes the incoming tenant, so it may only
+    # top up a primary that IS the incoming tenant (or an unidentified one).
+    if _is_incoming:
+        customer_name = customer_name or _legacy.get("שם", "")
+        customer_phone = customer_phone or _legacy.get("טלפון", "")
+        customer_email = customer_email or _legacy.get("אימייל", "")
     property_address = (
         prop_bd.get("full_address")
         or summary.get("פרטי_נכס", {}).get("כתובת", "")
