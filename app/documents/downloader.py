@@ -259,6 +259,15 @@ def _fetch_bytes(url: str) -> tuple[bytes, str]:
     return data, content_type
 
 
+def _effective_timeout() -> int:
+    """The configured timeout wins; _TIMEOUT is only the fallback."""
+    try:
+        from app.config import settings
+        return settings.doc_download_timeout or _TIMEOUT
+    except Exception:
+        return _TIMEOUT
+
+
 def _download_file(url: str, dest_dir: Path, label: str,
                    name_suffix: str = "") -> dict[str, Any]:
     """
@@ -284,7 +293,7 @@ def _download_file(url: str, dest_dir: Path, label: str,
             headers={"User-Agent": "mazekal-webhook/0.6"},
         )
 
-        with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
+        with urllib.request.urlopen(req, timeout=_effective_timeout()) as resp:
             content_type = resp.headers.get("Content-Type", "")
             base_ct = content_type.split(";")[0].strip().lower()
             if base_ct in ("text/html", "application/xhtml+xml"):

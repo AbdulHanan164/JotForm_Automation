@@ -33,7 +33,7 @@ sys.path.insert(0, "/home/ubuntu/app")
 from app.services.arnona.service import ArnonaService
 from app.services.arnona.conditional_logic import arnona_logic_engine
 from app.mappers.models import BusinessSubmission
-from app.mappers.missing_detector import detect_missing
+from app.rules.requirements import detect_missing
 from app.review import queue as Q
 from app.review.queue import build_from_pipeline
 from app.services.arnona.email_templates import draft_missing_info_email

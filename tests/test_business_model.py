@@ -20,7 +20,7 @@ from __future__ import annotations
 import pytest
 
 from app.mappers.business_mapper import build_from_parsed
-from app.mappers.missing_detector import detect_missing, _present, _doc_present
+from app.rules.requirements import detect_missing, _present, _doc_present
 from app.mappers.business_validators import (
     BUSINESS_VALIDATION_RULES,
     _check_duplicate_names,
