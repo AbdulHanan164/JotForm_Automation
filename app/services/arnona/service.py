@@ -25,6 +25,36 @@ _validation_engine          = ValidationEngine(ARNONA_VALIDATION_RULES)
 _business_validation_engine = ValidationEngine(BUSINESS_VALIDATION_RULES)
 
 
+_JOTFORM_HOST = "https://www.jotform.com/"
+
+
+def _resolve_pending_upload(path: str) -> str:
+    """Turn a transient pending-submissions reference into its finalized URL.
+
+    A LIVE webhook delivers an uploaded file as a relative reference:
+        uploads/<acct>/pending-submissions/<form>/<sub>/<file>.png
+    while the JotForm API reports the very same file as:
+        https://www.jotform.com/uploads/<acct>/<form>/<sub>/<file>.png
+    i.e. the finalized URL is the same path with the "pending-submissions/"
+    segment removed. Verified byte-identical against the API for live
+    submissions (7316-byte PNG, image/png) — without this the signature was
+    never downloaded because the value did not start with "http".
+
+    Replayed submissions already carry an absolute https URL and never reach
+    this function. Returns "" for an unrecognised shape so the caller keeps
+    the previous behaviour rather than inventing a URL.
+    """
+    s = (path or "").strip()
+    if not s or "pending-submissions/" not in s:
+        return ""
+    s = s.replace("pending-submissions/", "", 1).lstrip("/")
+    if s.startswith("http"):
+        return s
+    if not s.startswith("uploads/"):
+        return ""
+    return _JOTFORM_HOST + s
+
+
 class ArnonaService(BaseService):
 
     @property
@@ -228,13 +258,17 @@ class ArnonaService(BaseService):
             if sv.startswith("http"):
                 return {"present": True, "url": sv}
             if "pending-submissions" in sv:
+                # Resolved to the finalized URL below (FIX 1); the raw path is
+                # kept for traceability.
                 # JotForm delivers a finalized upload via a transient
                 # "uploads/.../pending-submissions/..." reference in the webhook
                 # body. The file IS real — the JotForm API exposes its final URL
                 # once the submission completes (verified 11/11 signatures:
                 # every pending-submissions path resolved to a finalized URL).
                 # Treat as present; keep the path for later API-based resolution.
-                return {"present": True, "url": "", "pending_path": sv}
+                return {"present": True,
+                        "url": _resolve_pending_upload(sv),
+                        "pending_path": sv}
             # Empty value or a widget button label (e.g. "להעלות קובץ") — the
             # field carries no upload, so it is genuinely absent.
             return {"present": False, "url": "", "pending_path": sv}

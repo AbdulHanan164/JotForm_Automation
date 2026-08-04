@@ -286,6 +286,17 @@ def _download_file(url: str, dest_dir: Path, label: str,
 
         with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
             content_type = resp.headers.get("Content-Type", "")
+            base_ct = content_type.split(";")[0].strip().lower()
+            if base_ct in ("text/html", "application/xhtml+xml"):
+                # An upload URL that is not accessible (missing api key, expired
+                # link) answers with a redirect to an HTML page. Writing that to
+                # disk as a .png would look like a successful download, so it is
+                # recorded as the failure it actually is.
+                result["error"] = (
+                    f"expected a file but received {base_ct} "
+                    "(upload URL not accessible)"
+                )
+                return result
             ext = _guess_extension(url, content_type, label)
 
             # Sanitize label for use as filename
