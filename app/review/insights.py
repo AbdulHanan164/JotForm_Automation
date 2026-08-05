@@ -87,6 +87,31 @@ def _status(item: Any) -> str:
     return str(getattr(st, "value", st) or "")
 
 
+def _issue_text(issue: dict) -> str:
+    """The human-readable text of a validation issue.
+
+    Real issues carry label/description/rule_triggered (not "message"), so
+    reading only "message" produced the useless placeholder "validation issue".
+    Preference order is most-descriptive-first.
+    """
+    for key in ("label", "description", "message", "rule_triggered", "rule"):
+        v = _clean(issue.get(key))
+        if v:
+            return v
+    return "validation issue"
+
+
+def _whose_contact(item: Any, value: str, field: str) -> str:
+    """Which participant a displayed contact value actually belongs to."""
+    for role, who in (("incoming_tenant", "the incoming party"),
+                      ("outgoing_tenant", "the outgoing party"),
+                      ("landlord", "the owner"),
+                      ("partner", "the second party")):
+        if value and value == _clean(_role(item, role).get(field)):
+            return who
+    return "the submitter"
+
+
 def _band(score: int, high: int = 80, mid: int = 55) -> str:
     return "high" if score >= high else ("medium" if score >= mid else "low")
 
@@ -239,8 +264,7 @@ def risk_flags(item: Any, type_counts: dict[str, int] | None = None) -> list[dic
     for i in issues:
         sev = i.get("severity")
         if sev in ("error", "warning"):
-            add("high" if sev == "error" else "medium",
-                _clean(i.get("message")) or _clean(i.get("rule")) or "validation issue")
+            add("high" if sev == "error" else "medium", _issue_text(i))
 
     if not _clean(getattr(item, "customer_email", "")):
         add("high", "no email address — the drafted letter has no recipient")
@@ -378,17 +402,28 @@ def consistency(item: Any) -> list[dict]:
     add = lambda level, text: out.append({"level": level, "text": text})
 
     for i in getattr(item, "validation_issues", None) or []:
-        add(i.get("severity") or "info",
-            _clean(i.get("message")) or _clean(i.get("rule")) or "validation issue")
+        add(i.get("severity") or "info", _issue_text(i))
 
     mi = set(_labels(getattr(item, "missing_info", None)))
     bd = getattr(item, "business_data", None) or {}
     prop = bd.get("property") or {}
 
-    if "אימייל" in mi and _clean(getattr(item, "customer_email", "")):
-        add("warning", "an email address is displayed, yet the case still asks for one")
-    if "טלפון" in mi and _clean(getattr(item, "customer_phone", "")):
-        add("warning", "a phone number is displayed, yet the case still asks for one")
+    # A contact can be on screen while still being requested, because the
+    # requirement concerns the INCOMING party's own field. That is not a
+    # contradiction when the two values belong to different participants, so the
+    # message names whose value is shown instead of implying an inconsistency.
+    for label_he, field, shown, article in (
+            ("אימייל", "email", _clean(getattr(item, "customer_email", "")), "an email address"),
+            ("טלפון", "phone", _clean(getattr(item, "customer_phone", "")), "a phone number")):
+        if label_he not in mi or not shown:
+            continue
+        target = _clean(_role(item, "incoming_tenant").get(field))
+        if target:
+            add("warning", f"{article} is displayed, yet the case still asks for one")
+        else:
+            add("info", f"the request is for the incoming party's own {field}, which is "
+                        f"empty — {article} shown ({shown}) belongs to "
+                        f"{_whose_contact(item, shown, field)}, so this is not a contradiction")
     if "עיר" in mi and _clean(prop.get("city")):
         add("warning", "a city is displayed, yet the case still asks for one")
     if "עיר" in mi and not _clean(prop.get("city")):
