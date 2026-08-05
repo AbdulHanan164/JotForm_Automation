@@ -76,6 +76,7 @@
     <div class="logo">{{ t.brand }}</div>
     <div>
       <a href="/dashboard">{{ t.nav_submissions }}</a> &nbsp;|&nbsp;
+      <a href="/insights">💡 {{ t.nav_insights if t.nav_insights is defined else 'Insights' }}</a> &nbsp;|&nbsp;
       <a href="/dashboard/lang/{{ 'en' if lang == 'he' else 'he' }}">🌐 {{ t.toggle }}</a> &nbsp;|&nbsp;
       <a href="/dashboard/logout">{{ t.logout }}</a>
     </div>

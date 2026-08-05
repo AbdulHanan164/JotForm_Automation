@@ -134,6 +134,11 @@ app.include_router(review_router)
 app.include_router(admin_router)
 app.include_router(dashboard_router)
 
+# Advisory, read-only operator insights (new surface — changes no existing route,
+# no stored data and no workflow). See app/review/insights.py.
+from app.routes.insights import router as insights_router  # noqa: E402
+app.include_router(insights_router)
+
 
 # ── Health (public — intentionally no auth) ───────────────────────────────────
 

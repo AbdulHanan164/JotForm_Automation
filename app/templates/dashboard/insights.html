@@ -1,0 +1,62 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{{ ins.title }}{% endblock %}
+{% block content %}
+
+<a class="back" href="/dashboard">{{ ins.back_queue }}</a>
+
+<h1 style="margin-top:10px">{{ ins.title }}</h1>
+<div class="flash" style="background:#eff6ff;color:#1d4ed8">{{ ins.subtitle }}</div>
+
+<div class="card">
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>{{ ins.th_priority }}</th>
+        <th>{{ ins.th_mzk }}</th>
+        <th>{{ ins.th_customer }}</th>
+        <th>{{ ins.th_type }}</th>
+        <th>{{ ins.th_rec }}</th>
+        <th>{{ ins.th_conf }}</th>
+        <th>{{ ins.th_missing }}</th>
+        <th>{{ ins.th_risk }}</th>
+        <th>{{ ins.th_dup }}</th>
+        <th>{{ ins.th_age }}</th>
+        <th>{{ ins.th_status }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr onclick="location.href='/insights/{{ r.submission_id }}'" style="cursor:pointer">
+        <td>
+          {% set pc = {'urgent':'badge-rejected','high':'badge-pending','normal':'badge-info','low':'badge-sent'} %}
+          <span class="badge {{ pc[r.priority_band] }}">{{ r.priority }}</span>
+        </td>
+        <td><a href="/insights/{{ r.submission_id }}">{{ r.mzk_ref or r.submission_id }}</a></td>
+        <td>{{ r.customer_name }}</td>
+        <td class="muted">{{ r.transaction_type }}</td>
+        <td>
+          {% set tc = {'ok':'badge-approved','info':'badge-info','warn':'badge-pending','neutral':'badge-sent'} %}
+          <span class="badge {{ tc[r.tone] }}">{{ r.recommendation }}</span>
+        </td>
+        <td>
+          {% set cc = {'high':'badge-approved','medium':'badge-pending','low':'badge-rejected'} %}
+          <span class="badge {{ cc[r.confidence_band] }}">{{ r.confidence }}%</span>
+        </td>
+        <td class="muted">{{ r.missing_total }}</td>
+        <td>{% if r.high_risk %}<span title="high">⚠️ {{ r.high_risk }}</span>{% endif %}
+            <span class="muted">{{ r.risk_count }}</span></td>
+        <td class="muted">{% if r.duplicate_count %}{{ r.duplicate_count }}{% else %}—{% endif %}</td>
+        <td class="muted">{{ r.age_days }}</td>
+        <td><span class="badge {{ status_meta[r.status].cls if r.status in status_meta else '' }}">{{ t.status[r.status] if r.status in t.status else r.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted" style="margin-top:12px">{{ total }} · {{ ins.advisory }}</p>
+  {% else %}
+  <p class="muted">{{ ins.none }}</p>
+  {% endif %}
+</div>
+
+{% endblock %}

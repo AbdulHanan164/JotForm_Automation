@@ -1,0 +1,151 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{{ ins.title }} · {{ d.mzk_ref or d.submission_id }}{% endblock %}
+{% block content %}
+
+<a class="back" href="/insights">{{ ins.back_queue }}</a>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <h1 style="margin:0">{{ d.customer_name or "—" }}
+      <span class="muted" style="font-size:15px">· {{ d.mzk_ref or d.submission_id }}</span>
+    </h1>
+    <div>
+      {% set tc = {'ok':'badge-approved','info':'badge-info','warn':'badge-pending','neutral':'badge-sent'} %}
+      <span class="badge {{ tc[d.recommendation.tone] }}">{{ d.recommendation.badge }}</span>
+      <span class="badge {{ status_meta[d.status].cls if d.status in status_meta else '' }}">{{ t.status[d.status] if d.status in t.status else d.status }}</span>
+    </div>
+  </div>
+  <div class="muted" style="margin-top:6px">{{ d.transaction_type or "—" }}</div>
+  <div class="muted" style="margin-top:8px">{{ d.recommendation.reason }}</div>
+  <div class="actions">
+    <a class="btn btn-primary" href="/dashboard/review/{{ d.submission_id }}">{{ ins.open_case }}</a>
+  </div>
+</div>
+
+<div class="flash" style="background:#eff6ff;color:#1d4ed8">{{ ins.advisory }}</div>
+
+<div class="grid2">
+  {# ── 1. confidence ── #}
+  <div class="card">
+    <h2>{{ ins.sec_conf }}</h2>
+    {% set cc = {'high':'badge-approved','medium':'badge-pending','low':'badge-rejected'} %}
+    <div class="kv">
+      <span class="k">{{ ins.th_conf }}</span>
+      <span class="v"><span class="badge {{ cc[d.confidence.band] }}">{{ d.confidence.score }}%</span>
+        <span class="muted">({{ d.confidence.got }}/{{ d.confidence.max }})</span></span>
+    </div>
+    {% for f in d.confidence.factors %}
+    <div class="kv">
+      <span class="k">{{ f.name }} <span class="muted">— {{ f.note }}</span></span>
+      <span class="v">{{ f.got }}/{{ f.max }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── 3. priority ── #}
+  <div class="card">
+    <h2>{{ ins.sec_prio }}</h2>
+    {% set pc = {'urgent':'badge-rejected','high':'badge-pending','normal':'badge-info','low':'badge-sent'} %}
+    <div class="kv">
+      <span class="k">{{ ins.th_priority }}</span>
+      <span class="v"><span class="badge {{ pc[d.priority.band] }}">{{ d.priority.band }} · {{ d.priority.score }}</span></span>
+    </div>
+    <div class="kv"><span class="k">{{ ins.th_age }}</span><span class="v">{{ d.priority.age_days }}</span></div>
+    <ul class="pill-list docs" style="margin-top:10px">
+      {% for r in d.priority.reasons %}<li>{{ r }}</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+
+{# ── 5. review summary ── #}
+<div class="card">
+  <h2>{{ ins.sec_summary }}</h2>
+  <div class="email-box"><pre class="email-body">{% for line in d.summary %}{{ line }}
+{% endfor %}</pre></div>
+</div>
+
+<div class="grid2">
+  {# ── 4. risk indicators ── #}
+  <div class="card">
+    <h2>{{ ins.sec_risk }}</h2>
+    {% if d.risks %}
+    <ul class="pill-list">
+      {% for r in d.risks %}
+      <li>{% if r.level == 'high' %}⚠️{% elif r.level == 'medium' %}•{% else %}◦{% endif %}
+        <strong class="muted">{{ r.level }}</strong> — {{ r.text }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">{{ ins.none }}</p>{% endif %}
+  </div>
+
+  {# ── 7. consistency ── #}
+  <div class="card">
+    <h2>{{ ins.sec_cons }}</h2>
+    <ul class="pill-list docs">
+      {% for c in d.consistency %}
+      <li>{% if c.level == 'error' %}⚠️{% elif c.level == 'warning' %}•{% elif c.level == 'ok' %}✓{% else %}◦{% endif %}
+        {{ c.text }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{# ── 8. document quality ── #}
+<div class="card">
+  <h2>{{ ins.sec_docs }}</h2>
+  <div class="kv">
+    <span class="k">{{ ins.th_missing }}</span>
+    <span class="v">{{ d.documents.downloaded }} ok · {{ d.documents.failed }} failed</span>
+  </div>
+  {% if d.documents.files %}
+  <table style="margin-top:10px">
+    <thead><tr><th>#</th><th>{{ ins.th_customer }}</th><th></th><th></th></tr></thead>
+    <tbody>
+      {% for f in d.documents.files %}
+      <tr>
+        <td class="muted">{{ f.key }}</td>
+        <td>{{ f.name }}</td>
+        <td class="muted">{{ f.ext }} · {{ f.bytes }} B</td>
+        <td>{% if f.ok %}<span class="badge badge-approved">ok</span>
+            {% else %}{% for fl in f.flags %}<div><span class="badge badge-pending">{{ fl }}</span></div>{% endfor %}{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  <ul class="pill-list docs" style="margin-top:10px">
+    {% for n in d.documents.notes %}<li>{{ n }}</li>{% endfor %}
+  </ul>
+</div>
+
+<div class="grid2">
+  {# ── 6. duplicates ── #}
+  <div class="card">
+    <h2>{{ ins.sec_dup }}</h2>
+    {% if d.duplicates %}
+    <table>
+      <thead><tr><th>{{ ins.th_mzk }}</th><th>{{ ins.th_customer }}</th><th></th></tr></thead>
+      <tbody>
+        {% for dup in d.duplicates %}
+        <tr>
+          <td><a href="/insights/{{ dup.submission_id }}">{{ dup.mzk_ref or dup.submission_id }}</a></td>
+          <td>{{ dup.customer_name or "—" }}</td>
+          <td><span class="badge {{ 'badge-pending' if dup.strength == 'strong' else 'badge-info' }}">{{ dup.strength }}</span>
+              <div class="muted">{{ dup.reasons | join(", ") }}</div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">{{ ins.no_dup }}</p>{% endif %}
+  </div>
+
+  {# ── 9. operator insights ── #}
+  <div class="card">
+    <h2>{{ ins.sec_tips }}</h2>
+    <ul class="pill-list docs">
+      {% for tip in d.tips %}<li>{{ tip }}</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% endblock %}
